@@ -56,7 +56,7 @@ function soundInfo()
     local aChannal = f:read("*line")
     if aChannal == nil then break end
 
-    local f2= io.popen('amixer sget 2> /dev/null'.. aChannal ..' | tail -n1 |cut -f 6 -d " " | grep -o -e "[0-9]*" 2> /dev/null')
+    local f2= io.popen('amixer sget '.. aChannal ..' 2> /dev/null | tail -n1 |cut -f 6 -d " " | grep -o -e "[0-9]*" 2> /dev/null')
     local aVolume = (tonumber(f2:read("*line")) or 0) / 100
     f2:close()
 
