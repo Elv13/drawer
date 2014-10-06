@@ -109,10 +109,10 @@ local function new(mywibox3,left_margin)
         musicBarVisibility = true
       end),
       button({ }, 4, function()
-          util.spawn("amixer -c0 sset Master 2dB+ >/dev/null")
+          util.spawn("amixer sset Master 2%+ >/dev/null")
       end),
       button({ }, 5, function()
-          util.spawn("amixer -c0 sset Master 2dB- >/dev/null")
+          util.spawn("amixer sset Master 2%- >/dev/null")
       end)
   )
 
