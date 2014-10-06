@@ -23,7 +23,7 @@ local errcount = 0
 local volumewidget2 = nil
 
 function amixer_volume_int(format)
-   local f = io.popen('amixer sget Master 2> /dev/null | tail -n1 |cut -f 6 -d " " | grep -o -e "[0-9]*"')
+   local f = io.popen('amixer sget Master 2> /dev/null | tail -n1 |cut -f 7 -d " " | grep -o -e "[0-9]*"')
    if f then
       local l = f:read()
       f:close()
