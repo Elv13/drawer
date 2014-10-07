@@ -30,11 +30,11 @@ function amixer_volume_int(format)
       local toReturn
       if (not l) or l == "" then
          toReturn = 0
-         errcount = errcount + 1
-         if errcount > 10 then
-            print("Too many amixer failure, stopping listener")
-            vicious.unregister(volumewidget2)
-         end
+--         errcount = errcount + 1
+--         if errcount > 10 then
+--            print("Too many amixer failure, stopping listener")
+--            vicious.unregister(volumewidget2)
+--         end
       else
          toReturn = tonumber(l)
       end
@@ -46,7 +46,7 @@ function amixer_volume_int(format)
 end
 
 function soundInfo()
-  local f = io.popen('amixer 2> /dev/null | grep "Simple mixer control" | cut -f 2 -d "\'" | sort -u')
+  local f = io.popen('pactl list sinks | grep "Name:" | rev | cut -d "." -f1 |rev')
 
   local soundHeader = wibox.widget.textbox()
   soundHeader:set_markup(" <span color='".. beautiful.bg_normal .."'><b><tt>CHANALS</tt></b></span> ")
@@ -56,12 +56,19 @@ function soundInfo()
     local aChannal = f:read("*line")
     if aChannal == nil then break end
 
-    local f2= io.popen('amixer sget '.. aChannal ..' 2> /dev/null | tail -n1 |cut -f 7 -d " " | grep -o -e "[0-9]*" 2> /dev/null')
+    local f2= io.popen('pactl list sinks | grep -A 7 "' .. aChannal .. '$" | tail -n 1 | cut -d "/" -f 2 | grep -o -e "[0-9]*"')
     local aVolume = (tonumber(f2:read("*line")) or 0) / 100
     f2:close()
 
+        
+    f2 = io.popen('pactl list sinks | grep -A 7 "' .. aChannal .. '$" | grep "Mute:" | grep -c "yes"| grep -o -e "[0-9]*"')
+    local isMute = (tonumber(f2:read("*line")) or 0);
+    f2:close()
+        
     local mute = wibox.widget.imagebox()
-    mute:set_image(config.iconPath .. "volm.png")
+        if isMute == 1 then mute:set_image(config.iconPath .. "volm.png")
+        else mute:set_image(config.iconPath .. "vol1.png") end
+    
 
     local plus = wibox.widget.imagebox()
     plus:set_image(config.iconPath .. "tags/cross2.png")
@@ -84,7 +91,8 @@ function soundInfo()
     l2:add(plus)
     l2:add(volume)
     l2:add(minus)
-    mainMenu:add_item({text=aChannal,prefix_widget=mute,suffix_widget=l2})
+    mainMenu:add_item({text=aChannal,prefix_widget=mute,suffix_widget=l2,button4= function() util.spawn_with_shell('pactl set-sink-volume `pactl list sinks | grep "Name:.*' .. aChannal .. '" | cut -d ":" -f 2` -- +2%') end, button5= function() util.spawn_with_shell('pactl set-sink-volume `pactl list sinks | grep "Name:.*' .. aChannal .. '" | cut -d ":" -f 2` -- -2%') end })
+    
   end
   f:close()
 end
@@ -107,6 +115,10 @@ local function new(mywibox3,left_margin)
             mywibox3.visible = not mywibox3.visible
         end
         musicBarVisibility = true
+      end),
+        
+      button({ }, 3, function()
+          util.spawn_with_shell("pactl set-sink-mute `pactl list sinks | grep -A 1 'State: RUNNING' | tail -n 1 | cut -d ' ' -f 2` toggle")
       end),
       button({ }, 4, function()
           util.spawn_with_shell("pactl set-sink-volume `pactl list sinks | grep -A 1 'State: RUNNING' | tail -n 1 | cut -d ' ' -f 2` -- +2%")
