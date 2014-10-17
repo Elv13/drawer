@@ -141,17 +141,18 @@ local function new(mywibox3,left_margin)
         soundService=0
         btn = util.table.join(
             button({ }, 1, function(geo)
-                    if not mainMenu then
-                        mainMenu = radical.context({width=200,arrow_type=radical.base.arrow_type.CENTERED})
-                        soundInfo()
+                    --Check if pavucontrol already open
+                    local f2= io.popen('ps -e | grep pavucontrol | cut -d " " -f 1')
+                    local pavuId = (tonumber(f2:read("*line")) or -1)
+                    f2:close()
+                    
+                    if pavuId == -1 then
+                        --Open pavucontrol
+                        util.spawn("pavucontrol")
+                    else
+                        --Close open window
+                        util.spawn_with_shell('kill -3 ' ..pavuId)
                     end
-                    mainMenu.visible = not mainMenu.visible
-                    mainMenu.parent_geometry = geo
-
-                    if mywibox3 and type(mywibox3) == "wibox" then
-                        mywibox3.visible = not mywibox3.visible
-                    end
-                    musicBarVisibility = true
                 end),
             button({ }, 4, function()
                     util.spawn_with_shell("pactl set-sink-volume `pactl list sinks | grep -A 1 'State: RUNNING' | tail -n 1 | cut -d ' ' -f 2` -- +2%")
