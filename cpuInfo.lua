@@ -104,21 +104,24 @@ local function new(margin, args)
           cpuModel:set_text(cpuStat.model or "")
       end
 
-      local process = {}
-      f = io.open('/tmp/topCpu.lua','r')
-      if f ~= nil then
-          text3 = f:read("*all")
-          text3 = text3.." return cpuStat"
-          f:close()
-          local afunction = loadstring(text3) or nil
-          if afunction ~= nil then
-              process = afunction()
-          else
-              process = nil
-          end
-      end
-      if process then
-          data.process = process
+      --local process = {}
+      --print(util.getdir("config")..'/Scripts/topCpu3.sh > '..util.getdir("config")..'/tmp/topCpu.lua')
+      util.spawn_with_shell(util.getdir("config")..'/Scripts/topCpu3.sh > '..util.getdir("config")..'/tmp/topCpu.lua')
+--      f = io.open(util.getdir("config")..'/tmp/topCpu.lua','r')
+--      if f ~= nil then
+--          text3 = f:read("*all")
+--          text3 = text3.." return cpuStat"
+--          f:close()
+--          local afunction = loadstring(text3) or nil
+--          if afunction ~= nil then
+--              process = afunction()
+--          else
+--              process = nil
+--          end
+--      end
+      dofile(util.getdir("config")..'/tmp/topCpu.lua')
+      if cpuStat then
+          data.process = cpuStat
       end
   end
 
@@ -164,9 +167,9 @@ local function new(margin, args)
       volUsage:set_color        ( beautiful.fg_normal                  )
       vicious.register          ( volUsage, vicious.widgets.cpu,'$1',1 )
 
-      local f2 = io.popen("cat /proc/cpuinfo | grep processor | tail -n1 | grep -e'[0-9]*' -o")
-      local coreNb = f2:read("*all") or "0"
-      f2:close()
+--      local f2 = io.popen("cat /proc/cpuinfo | grep processor | tail -n1 | grep -e'[0-9]*' -o")
+--      local coreNb = f2:read("*all") or "0"
+--      f2:close()
   end
 
   local function updateTable()
