@@ -129,6 +129,9 @@ local function new(mywibox3,left_margin)
                     end
                     musicBarVisibility = true
                 end),
+            button({ }, 3, function()
+                    util.spawn_with_shell("amixer set Master 1+ toggle")
+                end),
             button({ }, 4, function()
                     util.spawn_with_shell("amixer sset Master 2%+ >/dev/null")
                 end),
@@ -153,6 +156,9 @@ local function new(mywibox3,left_margin)
                         --Close open window
                         util.spawn_with_shell('kill -3 ' ..pavuId)
                     end
+                end),
+            button({ }, 3, function()
+                    util.spawn_with_shell("pactl set-sink-mute `pactl list sinks | grep -A 1 'State: RUNNING' | tail -n 1 | cut -d ' ' -f 2` toggle")
                 end),
             button({ }, 4, function()
                     util.spawn_with_shell("pactl set-sink-volume `pactl list sinks | grep -A 1 'State: RUNNING' | tail -n 1 | cut -d ' ' -f 2` -- +2%")
