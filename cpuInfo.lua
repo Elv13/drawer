@@ -80,22 +80,24 @@ local function new(margin, args)
   local main_table
 
   local function loadData()
-      local f = io.open('/tmp/cpuStatistic.lua','r')
-      local cpuStat = {}
-      if f ~= nil then
-          local text3 = f:read("*all")
-          text3 = text3.." return cpuInfo"
-          f:close()
-          local afunction = loadstring(text3)
-          if afunction ~= nil then
-              cpuStat = afunction() 
-              infoNotFound = nil
-          else
-              infoNotFound = "N/A"
-          end
-      else
-          infoNotFound = "N/A"
-      end
+--      local f = io.open('/tmp/cpuStatistic.lua','r')
+--      local cpuStat = {}
+--      if f ~= nil then
+--          local text3 = f:read("*all")
+--          print(text3)
+--          text3 = text3.." return cpuInfo"
+--          f:close()
+--          local afunction = loadstring(text3)
+--          if afunction ~= nil then
+--              cpuStat = afunction() 
+--              infoNotFound = nil
+--          else
+--              infoNotFound = "N/A"
+--          end
+--      else
+--          infoNotFound = "N/A"
+--          print("Unable to open file /tmp/cpuStatistic.lua")
+--      end
 
       if cpuStat then
           data.cpuStat = cpuStat
@@ -121,6 +123,11 @@ local function new(margin, args)
   end
 
   local function createDrawer()
+        
+      --Update cpu info file
+      util.spawn_with_shell('~/.config/awesome/Scripts/cpuInfo2.sh > ~/.config/awesome/tmp/cpuStatistic.lua')
+      require('tmp/cpuStatistic')
+
       cpuModel          = wibox.widget.textbox()
       spacer1           = wibox.widget.textbox()
       volUsage          = widget2.graph()
@@ -128,7 +135,7 @@ local function new(margin, args)
       topCpuW           = {}
       local emptyTable={};
       local tabHeader={};
-      for i=0,5,1 do
+      for i=0,cpuInfo.core,1 do
             emptyTable[i]= {"","","","",""}
             tabHeader[i]="C"..i
       end
