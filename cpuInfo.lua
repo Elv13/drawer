@@ -119,7 +119,17 @@ local function new(margin, args)
 --              process = nil
 --          end
 --      end
-      dofile(util.getdir("config")..'/tmp/topCpu.lua')
+    local cpuStat={}
+    local file = io.open(util.getdir("config")..'/tmp/topCpu.lua')
+      if file then
+    for line in file:lines() do
+        local p, per,a, n = unpack(line:split(";")) --unpack turns a table like the one given (if you use the recommended version) into a bunch of separate variables
+        table.insert(cpuStat, { pid = p, percent = per, args= a, name = n })
+    end
+    
+else
+            print('Unable to load topCpu.lua')
+end
       if cpuStat then
           data.process = cpuStat
       end
