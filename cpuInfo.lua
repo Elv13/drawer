@@ -126,12 +126,14 @@ local function new(margin, args)
       volUsage          = widget2.graph()
 
       topCpuW           = {}
-      local tab,widgets = radtab({
-          {"","","","",""},
-          {"","","","",""},
-          {"","","","",""},
-          {"","","","",""}},
-          {row_height=20,v_header = {"C1","C2","C3","C4"},
+      local emptyTable={};
+      local tabHeader={};
+      for i=0,5,1 do
+            emptyTable[i]= {"","","","",""}
+            tabHeader[i]="C"..i
+      end
+      local tab,widgets = radtab(emptyTable,
+          {row_height=20,v_header = tabHeader,
           h_header = {"GHz","Temp","Used","I/O","Idle"}
       })
       main_table = widgets
