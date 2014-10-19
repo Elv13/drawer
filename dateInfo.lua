@@ -68,6 +68,7 @@ local function createDrawer()
   someText2 = someText2 .. "<tt><b><i>" .. f:read() .. "</i></b><u>" .. "\n" .. f:read() .. '</u>\n' .. f:read("*all") .. "</tt>"
   f:close()
 
+
   util.spawn("/bin/bash -c '"..util.getdir("config") .."/Scripts/curWeather2.sh > /tmp/weather2.txt'")
 
   local weatherInfo2 = wibox.widget.textbox()
@@ -118,7 +119,7 @@ local function createDrawer()
   calInfo:set_markup(someText2)
   local testImage2       = wibox.widget.imagebox()
   local testImage3                       = wibox.widget.imagebox()
-  testImage3:set_image("/tmp/flower_crop.jpg")
+  testImage3:set_image(util.getdir("config") .."/tmp/flower_crop.jpeg")
 
   local spacer96                   = wibox.widget.textbox()
   spacer96:set_text("\n\n")
