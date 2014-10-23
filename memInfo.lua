@@ -106,7 +106,7 @@ local function refreshStat()
     end
 
     local process
-    local f = io.open('/tmp/topMem.lua','r')
+    local f = io.open(util.getdir("config")..'/tmp/topMem.lua','r')
     if f ~= nil then
         text3 = f:read("*all")
         text3 = text3.." return process"
