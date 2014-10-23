@@ -52,7 +52,8 @@ local tabWdgRow = {
 -- util.spawn("/bin/bash -c 'while true; do "..util.getdir("config") .."/Scripts/topMem2.sh > /tmp/topMem.lua;sleep 5;done'")
   
 local function refreshStat()
-    local f = io.open('/tmp/memStatistics.lua','r')
+    util.spawn_with_shell(util.getdir("config") .."/Scripts/topMem2.sh > "..util.getdir("config").."/tmp/topMem.lua")
+    local f = io.open(util.getdir("config")..'/tmp/memStatistics.lua','r')
     if f ~= nil then
       local text3 = f:read("*all")
       text3 = text3.." return memStat"
@@ -80,7 +81,7 @@ local function refreshStat()
         tabWdg[ tabWdgRow.SWAP ][ tabWdgCol.USED  ]:set_text( statNotFound or memStat[ "swap"][ "used"  ])
     end
 
-    local f = io.open('/tmp/memStatistics.lua','r')
+    local f = io.open(util.getdir("config")..'/tmp/memStatistics.lua','r')
     if f ~= nil then
         local text3 = f:read("*all")
         text3 = text3.." return memStat"
