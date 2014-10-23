@@ -1,3 +1,4 @@
+export LC_NUMERIC="en_US.UTF-8"
 IFS=`echo -en "\n\b"`
 CUT_AFTER=26
 TOTAL_RAM=`cat /proc/meminfo | grep MemTotal | grep -e "[0-9]*" -o`
