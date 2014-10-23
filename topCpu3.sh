@@ -20,7 +20,7 @@ function testSlash {
     fi
 }
 
-
+echo "cpuStat = {"
 for LINE in `/bin/ps -e -o pid,pcpu,args --sort -pcpu | grep -v "0.0"`;do
     PID=`echo $LINE | awk '{print $1}'`
     PERCENT=`echo $LINE | awk '{print $2}'`
@@ -33,7 +33,8 @@ for LINE in `/bin/ps -e -o pid,pcpu,args --sort -pcpu | grep -v "0.0"`;do
         COMMAND=${COMMAND:1}
     done
     if [ "$PERCENT" != "%CPU" ]; then
-       echo "$PID;$PERCENT;$COMMAND;`echo $COMMAND | cut -f1 -d' '`"
+       echo "   {  pid = $PID, percent = \"$PERCENT\", args = \"$COMMAND\", name = \"`echo $COMMAND | cut -f1 -d' '`\" },"
     fi
     SKIP="false"
 done
+echo }
