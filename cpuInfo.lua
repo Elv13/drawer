@@ -80,7 +80,8 @@ local function new(margin, args)
   local main_table
 
   local function loadData()
-      local f = io.open('/tmp/cpuStatistic.lua','r')
+        util.spawn_with_shell(util.getdir("config")..'/Scripts/topCpu3.sh > '..util.getdir("config")..'/tmp/topCpu.lua')
+      local f = io.open(util.getdir("config")..'/tmp/cpuStatistic.lua','r')
       local cpuStat = {}
       if f ~= nil then
           local text3 = f:read("*all")
@@ -89,11 +90,14 @@ local function new(margin, args)
           local afunction = loadstring(text3)
           if afunction ~= nil then
               cpuStat = afunction() 
+                print("CpuStat",cpuStat)
               infoNotFound = nil
           else
+                print("Info Not found")
               infoNotFound = "N/A"
           end
       else
+            print("cpuStatistic.lua not found")
           infoNotFound = "N/A"
       end
 
@@ -103,7 +107,7 @@ local function new(margin, args)
       end
 
       local process = {}
-      f = io.open('/tmp/topCpu.lua','r')
+      f = io.open(util.getdir("config")..'/tmp/topCpu.lua','r')
       if f ~= nil then
           text3 = f:read("*all")
           text3 = text3.." return cpuStat"
@@ -126,12 +130,14 @@ local function new(margin, args)
       volUsage          = widget2.graph()
 
       topCpuW           = {}
-      local tab,widgets = radtab({
-          {"","","","",""},
-          {"","","","",""},
-          {"","","","",""},
-          {"","","","",""}},
-          {row_height=20,v_header = {"C1","C2","C3","C4"},
+      local emptyTable={};
+      local tabHeader={};
+      for i=0,cpuInfo.core,1 do
+            emptyTable[i]= {"","","","",""}
+            tabHeader[i]="C"..i
+      end
+      local tab,widgets = radtab(emptyTable,
+          {row_height=20,v_header = tabHeader,
           h_header = {"GHz","Temp","Used","I/O","Idle"}
       })
       main_table = widgets
@@ -215,6 +221,28 @@ local function new(margin, args)
   volumewidget2:set_icon(config.iconPath .. "brain.png")
   vicious.register(volumewidget2, vicious.widgets.cpu,'$1',1)
   volumewidget2:buttons (util.table.join(button({ }, 1, function (geo) show(); data.menu.parent_geometry = geo end)))
+    
+--Load initial CPU stat
+    util.spawn_with_shell(util.getdir("config")..'/Scripts/cpuInfo2.sh > '..util.getdir("config")..'/tmp/cpuInfo.lua')
+    local f = io.open(util.getdir("config")..'/tmp/cpuInfo.lua','r')
+      local cpuStat = {}
+      if f ~= nil then
+          local text3 = f:read("*all")
+          text3 = text3.." return cpuInfo"
+          f:close()
+          local afunction = loadstring(text3)
+          if afunction ~= nil then
+              cpuInfo = afunction() 
+              infoNotFound = nil
+          else
+                print("Cpu info Not found")
+              infoNotFound = "N/A"
+          end
+      else
+            print("cpuInfo.lua not found")
+          infoNotFound = "N/A"
+      end
+    
   return volumewidget2
 end
 
