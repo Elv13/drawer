@@ -80,80 +80,58 @@ local function new(margin, args)
   local main_table
 
   local function loadData()
---      local f = io.open('/tmp/cpuStatistic.lua','r')
---      local cpuStat = {}
---      if f ~= nil then
---          local text3 = f:read("*all")
---          print(text3)
---          text3 = text3.." return cpuInfo"
---          f:close()
---          local afunction = loadstring(text3)
---          if afunction ~= nil then
---              cpuStat = afunction() 
---              infoNotFound = nil
---          else
---              infoNotFound = "N/A"
---          end
---      else
---          infoNotFound = "N/A"
---          print("Unable to open file /tmp/cpuStatistic.lua")
---      end
+      local f = io.open('/tmp/cpuStatistic.lua','r')
+      local cpuStat = {}
+      if f ~= nil then
+          local text3 = f:read("*all")
+          text3 = text3.." return cpuInfo"
+          f:close()
+          local afunction = loadstring(text3)
+          if afunction ~= nil then
+              cpuStat = afunction() 
+              infoNotFound = nil
+          else
+              infoNotFound = "N/A"
+          end
+      else
+          infoNotFound = "N/A"
+      end
 
       if cpuStat then
           data.cpuStat = cpuStat
           cpuModel:set_text(cpuStat.model or "")
       end
 
-      --local process = {}
-      --print(util.getdir("config")..'/Scripts/topCpu3.sh > '..util.getdir("config")..'/tmp/topCpu.lua')
-      util.spawn_with_shell(util.getdir("config")..'/Scripts/topCpu3.sh > '..util.getdir("config")..'/tmp/topCpu.lua')
---      f = io.open(util.getdir("config")..'/tmp/topCpu.lua','r')
---      if f ~= nil then
---          text3 = f:read("*all")
---          text3 = text3.." return cpuStat"
---          f:close()
---          local afunction = loadstring(text3) or nil
---          if afunction ~= nil then
---              process = afunction()
---          else
---              process = nil
---          end
---      end
-    local cpuStat={}
-    local file = io.open(util.getdir("config")..'/tmp/topCpu.lua')
-      if file then
-    for line in file:lines() do
-        local p, per,a, n = unpack(line:split(";")) --unpack turns a table like the one given (if you use the recommended version) into a bunch of separate variables
-        table.insert(cpuStat, { pid = p, percent = per, args= a, name = n })
-    end
-    
-else
-            print('Unable to load topCpu.lua')
-end
-      if cpuStat then
-          data.process = cpuStat
+      local process = {}
+      f = io.open('/tmp/topCpu.lua','r')
+      if f ~= nil then
+          text3 = f:read("*all")
+          text3 = text3.." return cpuStat"
+          f:close()
+          local afunction = loadstring(text3) or nil
+          if afunction ~= nil then
+              process = afunction()
+          else
+              process = nil
+          end
+      end
+      if process then
+          data.process = process
       end
   end
 
   local function createDrawer()
-        
-      --Update cpu info file
-      util.spawn_with_shell('~/.config/awesome/Scripts/cpuInfo2.sh > ~/.config/awesome/tmp/cpuStatistic.lua')
-      require('tmp/cpuStatistic')
-
       cpuModel          = wibox.widget.textbox()
       spacer1           = wibox.widget.textbox()
       volUsage          = widget2.graph()
 
       topCpuW           = {}
-      local emptyTable={};
-      local tabHeader={};
-      for i=0,cpuInfo.core,1 do
-            emptyTable[i]= {"","","","",""}
-            tabHeader[i]="C"..i
-      end
-      local tab,widgets = radtab(emptyTable,
-          {row_height=20,v_header = tabHeader,
+      local tab,widgets = radtab({
+          {"","","","",""},
+          {"","","","",""},
+          {"","","","",""},
+          {"","","","",""}},
+          {row_height=20,v_header = {"C1","C2","C3","C4"},
           h_header = {"GHz","Temp","Used","I/O","Idle"}
       })
       main_table = widgets
@@ -177,9 +155,9 @@ end
       volUsage:set_color        ( beautiful.fg_normal                  )
       vicious.register          ( volUsage, vicious.widgets.cpu,'$1',1 )
 
---      local f2 = io.popen("cat /proc/cpuinfo | grep processor | tail -n1 | grep -e'[0-9]*' -o")
---      local coreNb = f2:read("*all") or "0"
---      f2:close()
+      local f2 = io.popen("cat /proc/cpuinfo | grep processor | tail -n1 | grep -e'[0-9]*' -o")
+      local coreNb = f2:read("*all") or "0"
+      f2:close()
   end
 
   local function updateTable()
