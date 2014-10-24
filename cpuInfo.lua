@@ -77,6 +77,7 @@ local function new(margin, args)
 
   local modelWl
   local cpuWidgetArrayL
+  local cpuWidgetArrayL
   local main_table
 
   local function loadData()
@@ -174,7 +175,7 @@ local function new(margin, args)
           IO    = 4,
           IDLE  = 5,
       }
-      if data.cpuStat ~= nil and data.cpuStat["core0"] ~= nil and main_table ~= nil then  
+      if data.cpuStat ~= nil and main_table ~= nil then  
           for i=0 , data.cpuStat["core"] do --TODO add some way to correct the number of core, it usually fail on load --Solved
               if i <= (#main_table or 1) and main_table[i+1] then
                   main_table[i+1][cols[ "CLOCK" ]]:set_text(tonumber(data.cpuStat["core"..i]["speed"]) /1024 .. "Ghz"  )
@@ -182,6 +183,8 @@ local function new(margin, args)
                   main_table[i+1][cols[ "USED"  ]]:set_text(data.cpuStat["core"..i].usage                              )
                   main_table[i+1][cols[ "IO"    ]]:set_text(data.cpuStat["core"..i].iowait                             )
                   main_table[i+1][cols[ "IDLE"  ]]:set_text(data.cpuStat["core"..i].idle                               )
+                    print("Core:",data.cpuStat["core"..i].usage)
+                    print("Core:",data.cpuStat["core"..i].usage)
               end
           end
       end
@@ -235,7 +238,7 @@ local function new(margin, args)
               cpuInfo = afunction() 
               infoNotFound = nil
           else
-                print("Cpu info Not found")
+                print("Unable to load CPU info")
               infoNotFound = "N/A"
           end
       else
