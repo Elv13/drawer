@@ -27,12 +27,12 @@ IFS=$IFS_BACK
 echo "cpuInfo = {"
 echo "   model = \"$CPU_MODEL\","
 echo "   core = $CORE_NB"
-#for CURRENT_CORE in `seq 0 $CORE_NB`;do
-#    CPU_CORE=`echo -e "$CPU_INFO" | grep -e "processor[	]*: $CURRENT_CORE" --context +6 | grep "cpu MHz"`
-#
-#    CORE_ONE=`echo -e "$CPU_CORE" | head -n 1 | grep -e "[0-9.]*" -o`
-#    CORE_ONE=`printf "%.0f" $CORE_ONE`
-#    TEMP_ONE=`echo -e "$SENSOR" | grep "Core $CURRENT_CORE" | grep -e "   +[0-9]*" -o`
-#    echo "   core${CURRENT_CORE} = { speed= \"${CORE_ONE}\", temp= \"${TEMP_ONE:4}C\", ${CPU_INFO[${CURRENT_CORE}]}},"
-#done
+for CURRENT_CORE in `seq 0 $CORE_NB`;do
+    CPU_CORE=`echo -e "$CPU_INFO" | grep -e "processor[	]*: $CURRENT_CORE" --context +6 | grep "cpu MHz"`
+
+    CORE_ONE=`echo -e "$CPU_CORE" | head -n 1 | grep -e "[0-9.]*" -o`
+    CORE_ONE=`printf "%.0f" $CORE_ONE`
+    TEMP_ONE=`echo -e "$SENSOR" | grep "Core $CURRENT_CORE" | grep -e "   +[0-9]*" -o`
+    echo "   core${CURRENT_CORE} = { speed= \"${CORE_ONE}\", temp= \"${TEMP_ONE:4}C\", ${CPU_INFO[${CURRENT_CORE}]}},"
+done
 echo "}"
