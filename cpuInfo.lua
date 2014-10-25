@@ -86,16 +86,16 @@ local function new(margin, args)
     local pipe0 = io.popen("cat /proc/cpuinfo | grep processor | tail -n1 | grep -e'[0-9]*' -o")
     local coreN = pipe0:read("*all") or "0"
     pipe0:close()
-    
+
     if coreN then
         data.coreN=coreN
         print("Detected core number: ",data.coreN)
     else
         print("Unable to load core number")    
     end
-    
+
     local function loadData()
-    --Load CPU Information
+        --Load CPU Information
         util.spawn_with_shell(util.getdir("config")..'/Scripts/cpuInfo3.sh > '..util.getdir("config")..'/tmp/cpuStatistic.lua')
         local f = io.open(util.getdir("config")..'/tmp/cpuStatistic.lua','r')
         local cpuStat = {}
@@ -114,13 +114,13 @@ local function new(margin, args)
                 print("Info Not found")
                 infoNotFound = "N/A"
             end
-           
+
         else
             print("cpuStatistic.lua not found")
             infoNotFound = "N/A"
         end
-    
-    --Load process information
+
+        --Load process information
         local process = {}
         util.spawn_with_shell(util.getdir("config")..'/Scripts/topCpu3.sh > '..util.getdir("config")..'/tmp/topCpu.lua')
         f = io.open(util.getdir("config")..'/tmp/topCpu.lua','r')
@@ -181,6 +181,7 @@ local function new(margin, args)
     end
 
     local function updateTable()
+        loadData()
         local cols = {
             CLOCK = 1,
             TEMP  = 2,
@@ -189,9 +190,9 @@ local function new(margin, args)
             IDLE  = 5,
         }
         if data.cpuStat ~= nil and main_table ~= nil then  
-            for i=0 , data.cpuStat["core"] do --TODO add some way to correct the number of core, it usually fail on load --Solved
+            for i=0 , data.coreN do --TODO add some way to correct the number of core, it usually fail on load --Solved
                 if i <= (#main_table or 1) and main_table[i+1] then
-                    main_table[i+1][cols[ "CLOCK" ]]:set_text(tonumber(data.cpuStat["core"..i]["speed"]) /1024 .. "Ghz"  )
+                    main_table[i+1][cols[ "CLOCK" ]]:set_text(tonumber(data.cpuStat["core"..i]["speed"]))
                     main_table[i+1][cols[ "TEMP"  ]]:set_text(data.cpuStat["core"..i].temp                               )
                     main_table[i+1][cols[ "USED"  ]]:set_text(data.cpuStat["core"..i].usage                              )
                     main_table[i+1][cols[ "IO"    ]]:set_text(data.cpuStat["core"..i].iowait                             )
@@ -226,7 +227,6 @@ local function new(margin, args)
         else
         end
         if not data.menu.visible then
-            loadData()
             updateTable()
             reload_top(procMenu,data)
         end
@@ -237,6 +237,12 @@ local function new(margin, args)
     volumewidget2:set_icon(config.iconPath .. "brain.png")
     vicious.register(volumewidget2, vicious.widgets.cpu,'$1',1)
     volumewidget2:buttons (util.table.join(button({ }, 1, function (geo) show(); data.menu.parent_geometry = geo end)))
+
+
+    --Set timer for update
+    local cpuTimer = capi.timer({ timeout = 1000 })
+    cpuTimer:connect_signal("timeout", updateTable)
+    cpuTimer:start()
 
     return volumewidget2
 end
