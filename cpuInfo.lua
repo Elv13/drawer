@@ -160,6 +160,10 @@ local function new(margin, args)
         vicious.cache(vicious.widgets.cpu)
         --Register cell table as vicious widgets
         for i=0, (data.coreN-1) do
+            --Cpu Speed (Frequency in Ghz
+            vicious.register(main_table[i+1][1], vicious.widgets.cpuinf,   function (widget, args)
+                                                                            return string.format("%.2f", args['{cpu0 ghz}'])
+                                                                        end,1)
             --Used cols
             vicious.register(main_table[i+1][3], vicious.widgets.cpu,'$'..(i+2),1)
         end
@@ -199,7 +203,7 @@ local function new(margin, args)
         if data.cpuStat ~= nil and main_table ~= nil then  
             for i=0 , (data.coreN-1) do --TODO add some way to correct the number of core, it usually fail on load --Solved
                 if i <= (#main_table or 1) and main_table[i+1] then
-                    main_table[i+1][cols[ "CLOCK" ]]:set_text(tonumber(data.cpuStat["core"..i]["speed"]))
+                    --main_table[i+1][cols[ "CLOCK" ]]:set_text(tonumber(data.cpuStat["core"..i]["speed"]))
                     main_table[i+1][cols[ "TEMP"  ]]:set_text(data.cpuStat["core"..i].temp                               )
                     --main_table[i+1][cols[ "USED"  ]]:set_text(data.cpuStat["core"..i].usage                              )
                     main_table[i+1][cols[ "IO"    ]]:set_text(data.cpuStat["core"..i].iowait                             )
