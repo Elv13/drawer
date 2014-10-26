@@ -153,7 +153,7 @@ local function new(margin, args)
         end
         local tab,widgets = radtab(emptyTable,
             {row_height=20,v_header = tabHeader,
-                h_header = {"GHz","Temp","Used","I/O","Idle"}
+                h_header = {"GHz","Temp","Used","Cache","Idle"}
             })
         main_table = widgets
         
@@ -161,9 +161,9 @@ local function new(margin, args)
         --Register cell table as vicious widgets
         for i=0, (data.coreN-1) do
             --Cpu Speed (Frequency in Ghz
-            vicious.register(main_table[i+1][1], vicious.widgets.cpuinf,   function (widget, args)
-                                                                            return string.format("%.2f", args['{cpu0 ghz}'])
-                                                                        end,1)
+            vicious.register(main_table[i+1][1], vicious.widgets.cpuinf,    function (widget, args)
+                                                                                return string.format("%.2f", args['{cpu'..i..' ghz}'])
+                                                                            end,2)
             --Used cols
             vicious.register(main_table[i+1][3], vicious.widgets.cpu,'$'..(i+2),1)
         end
@@ -191,7 +191,6 @@ local function new(margin, args)
     end
 
     local function updateTable()
-        print("Update table")
         loadData()
         local cols = {
             CLOCK = 1,
@@ -206,7 +205,7 @@ local function new(margin, args)
                     --main_table[i+1][cols[ "CLOCK" ]]:set_text(tonumber(data.cpuStat["core"..i]["speed"]))
                     main_table[i+1][cols[ "TEMP"  ]]:set_text(data.cpuStat["core"..i].temp                               )
                     --main_table[i+1][cols[ "USED"  ]]:set_text(data.cpuStat["core"..i].usage                              )
-                    main_table[i+1][cols[ "IO"    ]]:set_text(data.cpuStat["core"..i].iowait                             )
+                    --main_table[i+1][cols[ "IO"    ]]:set_text(data.cpuStat["core"..i].iowait                             )
                     main_table[i+1][cols[ "IDLE"  ]]:set_text(data.cpuStat["core"..i].idle                               )
                 end
             end
@@ -245,8 +244,7 @@ local function new(margin, args)
     local volumewidget2 = allinone()
     volumewidget2:set_icon(config.iconPath .. "brain.png")
     vicious.register(volumewidget2, vicious.widgets.cpu,'$1',1)
-    volumewidget2:buttons (util.table.join( button({ }, 1, function (geo) show(); data.menu.parent_geometry = geo end),
-                                            button({ }, 1, function (geo) updateTable(); print("RIghtclick"); reload_top(procMenu,data); data.menu.parent_geometry = geo end)))
+    volumewidget2:buttons (util.table.join( button({ }, 1, function (geo) show(); data.menu.parent_geometry = geo end)))
 
 
     --Set timer for update
