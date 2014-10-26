@@ -114,7 +114,6 @@ local function new(margin, args)
                 print("Info Not found")
                 infoNotFound = "N/A"
             end
-
         else
             print("cpuStatistic.lua not found")
             infoNotFound = "N/A"
@@ -167,7 +166,7 @@ local function new(margin, args)
         cpuWidgetArrayL:set_bottom(10)
         cpuWidgetArrayL:set_widget(tab)
 
-        cpuModel:set_text(data.cpuStat and data.cpuStat.model or "N/A")
+        cpuModel:set_text(data.cpuStat.model or "N/A")
         cpuModel.width     = 212
 
         volUsage:set_width        ( 212                                  )
@@ -181,7 +180,7 @@ local function new(margin, args)
     end
 
     local function updateTable()
-        print("Update tale")
+        print("Update table")
         loadData()
         local cols = {
             CLOCK = 1,
@@ -235,13 +234,14 @@ local function new(margin, args)
     local volumewidget2 = allinone()
     volumewidget2:set_icon(config.iconPath .. "brain.png")
     vicious.register(volumewidget2, vicious.widgets.cpu,'$1',1)
-    volumewidget2:buttons (util.table.join(button({ }, 1, function (geo) show(); data.menu.parent_geometry = geo end)))
+    volumewidget2:buttons (util.table.join( button({ }, 1, function (geo) show(); data.menu.parent_geometry = geo end),
+                                            button({ }, 1, function (geo) updateTable(); print("RIghtclick"); reload_top(procMenu,data); data.menu.parent_geometry = geo end)))
 
 
     --Set timer for update
-    local cpuTimer = capi.timer({ timeout = 1000 })
-    cpuTimer:connect_signal("timeout", updateTable)
-    cpuTimer:start()
+    --local cpuTimer = capi.timer({ timeout = 1000 })
+    --cpuTimer:connect_signal("timeout", updateTable)
+    --cpuTimer:start()
 
     return volumewidget2
 end
