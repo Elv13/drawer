@@ -181,6 +181,7 @@ local function new(margin, args)
     end
 
     local function updateTable()
+        print("Update tale")
         loadData()
         local cols = {
             CLOCK = 1,
@@ -197,8 +198,6 @@ local function new(margin, args)
                     main_table[i+1][cols[ "USED"  ]]:set_text(data.cpuStat["core"..i].usage                              )
                     main_table[i+1][cols[ "IO"    ]]:set_text(data.cpuStat["core"..i].iowait                             )
                     main_table[i+1][cols[ "IDLE"  ]]:set_text(data.cpuStat["core"..i].idle                               )
-                    print("Core:",data.cpuStat["core"..i].usage)
-                    print("Core:",data.cpuStat["core"..i].usage)
                 end
             end
         end
