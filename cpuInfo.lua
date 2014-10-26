@@ -161,11 +161,7 @@ local function new(margin, args)
         --Register cell table as vicious widgets
         for i=0, (data.coreN-1) do
             --Used cols
-            vicious.register(main_table[i+1][3], vicious.widgets.cpu,'$'..(2),1)
-         --vicious.register(main_table[2][3], vicious.widgets.cpu,'$'..(3),1)
-         --vicious.register(main_table[3][3], vicious.widgets.cpu,'$'..(4),1)
-         --vicious.register(main_table[4][3], vicious.widgets.cpu,'$'..(5),1)
-            --print("vicious "..(i+2))
+            vicious.register(main_table[i+1][3], vicious.widgets.cpu,'$'..(i+2),1)
         end
         modelWl         = wibox.layout.fixed.horizontal()
         modelWl:add         ( cpuModel      )
