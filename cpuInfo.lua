@@ -156,6 +156,17 @@ local function new(margin, args)
                 h_header = {"GHz","Temp","Used","I/O","Idle"}
             })
         main_table = widgets
+        
+        vicious.cache(vicious.widgets.cpu)
+        --Register cell table as vicious widgets
+        for i=0, (data.coreN-1) do
+            --Used cols
+            vicious.register(main_table[i+1][3], vicious.widgets.cpu,'$'..(2),1)
+         --vicious.register(main_table[2][3], vicious.widgets.cpu,'$'..(3),1)
+         --vicious.register(main_table[3][3], vicious.widgets.cpu,'$'..(4),1)
+         --vicious.register(main_table[4][3], vicious.widgets.cpu,'$'..(5),1)
+            --print("vicious "..(i+2))
+        end
         modelWl         = wibox.layout.fixed.horizontal()
         modelWl:add         ( cpuModel      )
 
@@ -167,7 +178,7 @@ local function new(margin, args)
         cpuWidgetArrayL:set_widget(tab)
 
         cpuModel:set_text(data.cpuStat.model or "N/A")
-        cpuModel.width     = 500 --212
+        cpuModel.width     = 212
 
         volUsage:set_width        ( 212                                  )
         volUsage:set_height       ( 30                                   )
@@ -190,11 +201,11 @@ local function new(margin, args)
             IDLE  = 5,
         }
         if data.cpuStat ~= nil and main_table ~= nil then  
-            for i=0 , data.coreN do --TODO add some way to correct the number of core, it usually fail on load --Solved
+            for i=0 , (data.coreN-1) do --TODO add some way to correct the number of core, it usually fail on load --Solved
                 if i <= (#main_table or 1) and main_table[i+1] then
                     main_table[i+1][cols[ "CLOCK" ]]:set_text(tonumber(data.cpuStat["core"..i]["speed"]))
                     main_table[i+1][cols[ "TEMP"  ]]:set_text(data.cpuStat["core"..i].temp                               )
-                    main_table[i+1][cols[ "USED"  ]]:set_text(data.cpuStat["core"..i].usage                              )
+                    --main_table[i+1][cols[ "USED"  ]]:set_text(data.cpuStat["core"..i].usage                              )
                     main_table[i+1][cols[ "IO"    ]]:set_text(data.cpuStat["core"..i].iowait                             )
                     main_table[i+1][cols[ "IDLE"  ]]:set_text(data.cpuStat["core"..i].idle                               )
                 end
