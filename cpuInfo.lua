@@ -167,7 +167,7 @@ local function new(margin, args)
         cpuWidgetArrayL:set_widget(tab)
 
         cpuModel:set_text(data.cpuStat.model or "N/A")
-        cpuModel.width     = 212
+        cpuModel.width     = 500 --212
 
         volUsage:set_width        ( 212                                  )
         volUsage:set_height       ( 30                                   )
