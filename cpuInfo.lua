@@ -96,7 +96,7 @@ local function new(margin, args)
 
     local function loadData()
         --Load CPU Information
-        util.spawn_with_shell(util.getdir("config")..'/Scripts/cpuInfo3.sh > '..util.getdir("config")..'/tmp/cpuStatistic.lua')
+        util.spawn_with_shell(util.getdir("config")..'/drawer/Scripts/cpuInfo3.sh > '..util.getdir("config")..'/tmp/cpuStatistic.lua')
         local f = io.open(util.getdir("config")..'/tmp/cpuStatistic.lua','r')
         local cpuStat = {}
         if f ~= nil then
@@ -121,7 +121,7 @@ local function new(margin, args)
 
         --Load process information
         local process = {}
-        util.spawn_with_shell(util.getdir("config")..'/Scripts/topCpu3.sh > '..util.getdir("config")..'/tmp/topCpu.lua')
+        util.spawn_with_shell(util.getdir("config")..'/drawer/Scripts/topCpu3.sh > '..util.getdir("config")..'/tmp/topCpu.lua')
         f = io.open(util.getdir("config")..'/tmp/topCpu.lua','r')
         if f ~= nil then
             text3 = f:read("*all")
