@@ -96,28 +96,7 @@ local function new(margin, args)
 
     local function loadData()
         --Load CPU Information
-        util.spawn_with_shell(util.getdir("config")..'/Scripts/cpuInfo3.sh > '..util.getdir("config")..'/tmp/cpuStatistic.lua')
-        local f = io.open(util.getdir("config")..'/tmp/cpuStatistic.lua','r')
-        local cpuStat = {}
-        if f ~= nil then
-            local text3 = f:read("*all")
-            text3 = text3.." return cpuInfo"
-            f:close()
-            local afunction = loadstring(text3)
-            if afunction ~= nil then
-                local cpuInfo = afunction() 
-                infoNotFound = nil
-                --Check and save info
-                if cpuInfo then data.cpuStat=cpuInfo
-                else print("Unable to parse cpu information") end
-            else
-                print("Info Not found")
-                infoNotFound = "N/A"
-            end
-        else
-            print("cpuStatistic.lua not found")
-            infoNotFound = "N/A"
-        end
+        
 
         --Load process information
         local process = {}
@@ -196,24 +175,6 @@ local function new(margin, args)
 
     local function updateTable()
         loadData()
-        local cols = {
-            CLOCK = 1,
-            TEMP  = 2,
-            USED  = 3,
-            IO    = 4,
-            IDLE  = 5,
-        }
-        if data.cpuStat ~= nil and main_table ~= nil then  
-            for i=0 , (data.coreN-1) do --TODO add some way to correct the number of core, it usually fail on load --Solved
-                if i <= (#main_table or 1) and main_table[i+1] then
-                    --main_table[i+1][cols[ "CLOCK" ]]:set_text(tonumber(data.cpuStat["core"..i]["speed"]))
-                    main_table[i+1][cols[ "TEMP"  ]]:set_text(data.cpuStat["core"..i].temp                               )
-                    --main_table[i+1][cols[ "USED"  ]]:set_text(data.cpuStat["core"..i].usage                              )
-                    --main_table[i+1][cols[ "IO"    ]]:set_text(data.cpuStat["core"..i].iowait                             )
-                    main_table[i+1][cols[ "IDLE"  ]]:set_text(data.cpuStat["core"..i].idle                               )
-                end
-            end
-        end
     end
 
     local function regenMenu()
