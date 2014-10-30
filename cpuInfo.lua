@@ -96,6 +96,14 @@ local function new(margin, args)
 
     local function loadData()
         --Load CPU Information
+         --Evaluate core number
+        local pipe0 = io.popen('sensors | grep "Core" | grep -e ": *+[0-9]*" -o| grep -e "[0-9]*" -o')
+        local i=0
+        for line in pipe0:lines() do
+            main_table[i+1][3]:set_text(line)
+            i=i+1
+        end
+        pipe0:close()
         
 
         --Load process information
@@ -132,7 +140,7 @@ local function new(margin, args)
         end
         local tab,widgets = radtab(emptyTable,
             {row_height=20,v_header = tabHeader,
-                h_header = {"GHz","Temp","Used","Cache","Idle"}
+                h_header = {"GHz","Used","Temp","Cache","Idle"}
             })
         main_table = widgets
         
@@ -143,7 +151,7 @@ local function new(margin, args)
                                                                                 return string.format("%.2f", args['{cpu'..i..' ghz}'])
                                                                             end,2)
             --Used cols
-            vicious.register(main_table[i+1][3], vicious.widgets.cpu,'$'..(i+2),1)
+            vicious.register(main_table[i+1][2], vicious.widgets.cpu,'$'..(i+2),1)
         end
         modelWl         = wibox.layout.fixed.horizontal()
         modelWl:add         ( cpuModel      )
