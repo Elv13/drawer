@@ -157,7 +157,6 @@ local function new(margin, args)
             })
         main_table = widgets
         
-        vicious.cache(vicious.widgets.cpu)
         --Register cell table as vicious widgets
         for i=0, (data.coreN-1) do
             --Cpu Speed (Frequency in Ghz
