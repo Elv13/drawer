@@ -176,8 +176,13 @@ local function new(margin, args)
         cpuWidgetArrayL:set_margins(3)
         cpuWidgetArrayL:set_bottom(10)
         cpuWidgetArrayL:set_widget(tab)
-
-        cpuModel:set_text(data.cpuStat.model or "N/A")
+        
+        --Load Cpu model just once
+        local pipeIn = io.popen('cat /proc/cpuinfo | grep "model name" | cut -d ":" -f2 | head -n 1',"r")
+        local cpuName = pipeIn:read("*all") or "N/A"
+        pipeIn:close()
+        
+        cpuModel:set_text(cpuName)
         cpuModel.width     = 212
 
         volUsage:set_width        ( 212                                  )

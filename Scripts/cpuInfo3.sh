@@ -5,8 +5,6 @@ LC_NUMERIC="en_US.UTF-8"
 
 CPU_INFO=`cat /proc/cpuinfo`
 SENSOR=`sensors`
-CPU_MODEL=`echo -e "$CPU_INFO" | grep "model name" | grep -e ":[0-9a-zA-Z()@., ]*" -o | head -n 1`
-CPU_MODEL=${CPU_MODEL:2}
 CORE_NB=`echo -e "$CPU_INFO" | grep processor | tail -n 1 | awk '{print $3}'`
 
 
@@ -38,7 +36,6 @@ IDLE=0
 USAGE=0
 IFS=$IFS_BACK
 echo "cpuInfo = {"
-echo "   model = \"$CPU_MODEL\","
 #echo "   core = $CORE_NB"
 echo "   overallLoad = `top -bn1 | grep 'Cpu(s)' | sed 's/.*, *\([0-9.]*\)%* id.*/\1/' | bc`,"
 for CURRENT_CORE in `seq 0 $CORE_NB`;do
