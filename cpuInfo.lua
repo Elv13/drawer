@@ -134,9 +134,9 @@ local function new(margin, args)
         topCpuW           = {}
         local emptyTable={};
         local tabHeader={};
-        for i=0,data.coreN,1 do
+        for i=1,data.coreN,1 do
             emptyTable[i]= {"","","","",""}
-            tabHeader[i]="C"..i
+            tabHeader[i]="C"..(i-1)
         end
         local tab,widgets = radtab(emptyTable,
             {row_height=20,v_header = tabHeader,
