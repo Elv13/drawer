@@ -96,7 +96,7 @@ local function new(margin, args)
 
     local function loadData()
         --Load CPU Information
-         --Evaluate core number
+        --Get cores temperatures
         local pipe0 = io.popen('sensors | grep "Core" | grep -e ": *+[0-9]*" -o| grep -e "[0-9]*" -o')
         local i=0
         for line in pipe0:lines() do
