@@ -88,7 +88,7 @@ local function new(margin, args)
     pipe0:close()
 
     if coreN then
-        data.coreN=coreN
+        data.coreN=(coreN+1)
         print("Detected core number: ",data.coreN)
     else
         print("Unable to load core number")    
