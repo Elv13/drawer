@@ -52,22 +52,20 @@ local tabWdgRow = {
 -- util.spawn("/bin/bash -c 'while true; do "..util.getdir("config") .."/Scripts/topMem2.sh > /tmp/topMem.lua;sleep 5;done'")
   
 local function refreshStat()
-    util.spawn_with_shell(util.getdir("config") .."/Scripts/topMem2.sh > "..util.getdir("config").."/tmp/topMem.lua")
-    local f = io.open(util.getdir("config")..'/tmp/memStatistics.lua','r')
-    if f ~= nil then
-      local text3 = f:read("*all")
-      text3 = text3.." return memStat"
-      f:close()
-      local afunction = loadstring(text3)
-      memStat = {}
-      if afunction ~= nil then
-        memStat = afunction()
-      end
-      statNotFound = nil
-    else
-      statNotFound = "N/A"
+    --Load process information
+        local pipe0 = io.popen(util.getdir("config")..'/drawer/Scripts/topMem.sh')
+        local tmpMem={}
+        memStat = {}
+        local i=0
+        for line in pipe0:lines() do
+            tmpMem[i]=line:split(";")
+        i=i+1
+        end
+        pipe0:close()
+    if tmpMem ~= nil then
+        data.process=tmpMem
     end
-
+    
     if memStat == nil or memStat["ram"] == nil then
       statNotFound = "N/A"
     end
@@ -105,22 +103,6 @@ local function refreshStat()
         data.state = memStat["state"]
     end
 
-    local process
-    local f = io.open(util.getdir("config")..'/tmp/topMem.lua','r')
-    if f ~= nil then
-        text3 = f:read("*all")
-        text3 = text3.." return process"
-        f:close()
-        afunction = loadstring(text3)
-        if afunction == nil then
-            return { count = o, widgets = widgetTable2}
-        end
-        process = afunction()
-    end
-
-    if process ~= nil and process[1] then
-        data.process = process
-    end
 end
 
 local function reload_user(usrMenu,data)
@@ -145,19 +127,15 @@ end
 
 local function reload_top(topMenu,data)
   for i = 0, #(data.process or {}) do
-    if data.process ~= nil and data.process[i]["name"] ~= nil then
-
---             local aPid = wibox.widget.textbox()
---             aPid:set_text(data.process[i]["pid"])
-
+    if data.process ~= nil then
       local aMem = wibox.widget.textbox()
-      aMem:set_text(data.process[i]["mem"])
+      aMem:set_text(data.process[i][2])
       aMem.fit = function()
         return 58,topMenu.item_height
       end
 
       for k2,v2 in ipairs(capi.client.get()) do
-        if v2.class:lower() == data.process[i]["name"]:lower() or v2.name:lower():find(data.process[i]["name"]:lower()) ~= nil then
+        if v2.class:lower() == data.process[i][3]:lower() or v2.name:lower():find(data.process[i][3]:lower()) ~= nil then
           aMem.bg_image = v2.icon
           break
         end
@@ -182,7 +160,7 @@ local function reload_top(topMenu,data)
       testImage2       = wibox.widget.imagebox()
       testImage2:set_image(config.iconPath .. "kill.png")
 
-      topMenu:add_item({text=data.process[i]["name"] or "N/A",prefix_widget=aMem,suffix_widget=testImage2})
+      topMenu:add_item({text=data.process[i][3] or "N/A",prefix_widget=aMem,suffix_widget=testImage2})
     end
   end
 end
