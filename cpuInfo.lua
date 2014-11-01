@@ -174,10 +174,6 @@ local function new(margin, args)
 
     end
 
-    local function updateTable()
-        loadData()
-    end
-
     local function regenMenu()
         local imb = wibox.widget.imagebox()
         imb:set_image(beautiful.path .. "Icon/reload.png")
@@ -205,7 +201,7 @@ local function new(margin, args)
         else
         end
         if not data.menu.visible then
-            updateTable()
+            loadData()
             reload_top(procMenu,data)
         end
         data.menu.visible = not data.menu.visible
