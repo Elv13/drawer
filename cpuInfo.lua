@@ -37,6 +37,17 @@ local function match_icon(arr,name)
 end
 
 local function reload_top(procMenu,data)
+    
+    --Load process information
+        local pipe0 = io.popen(util.getdir("config")..'/drawer/Scripts/topCpu.sh')
+        data.process={}
+        local i=0
+        for line in pipe0:lines() do
+            data.process[i]=line:split(";")
+        i=i+1
+        end
+        pipe0:close()
+    
     procMenu:clear()
     if data.process then
         local procIcon = {}
@@ -103,17 +114,6 @@ local function new(margin, args)
         for line in pipe0:lines() do
             main_table[i+1][3]:set_text(line)
             i=i+1
-        end
-        pipe0:close()
-        
-
-        --Load process information
-        pipe0 = io.popen(util.getdir("config")..'/drawer/Scripts/topCpu.sh')
-        data.process={}
-        i=0
-        for line in pipe0:lines() do
-            data.process[i]=line:split(";")
-        i=i+1
         end
         pipe0:close()
         
