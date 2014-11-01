@@ -174,13 +174,15 @@ local function new(margin, args)
 
     end
 
+    local function refresh()
+        loadData()
+        reload_top(procMenu,data)
+    end
+    
     local function regenMenu()
         local imb = wibox.widget.imagebox()
         imb:set_image(beautiful.path .. "Icon/reload.png")
-        --imb:buttons(button({ }, 1, function (geo) show();
-        --            data.menu.parent_geometry = volumewidget2.geo;
-        --            print("Bho")
-        --            show() end))
+        imb:buttons(button({ }, 1, function (geo) refresh() end))
         
         aMenu = menu({item_width=198,width=200,arrow_type=radical.base.arrow_type.CENTERED})
         aMenu:add_widget(radical.widgets.header(aMenu,"INFO")  , {height = 20  , width = 200})
@@ -194,10 +196,7 @@ local function new(margin, args)
         return aMenu
     end
     
-    local function refresh()
-        loadData()
-        reload_top(procMenu,data)
-    end
+    
     
     local function show()
         if not data.menu then
