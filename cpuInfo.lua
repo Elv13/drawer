@@ -193,7 +193,12 @@ local function new(margin, args)
         aMenu:add_embeded_menu(procMenu)
         return aMenu
     end
-
+    
+    local function refresh()
+        loadData()
+        reload_top(procMenu,data)
+    end
+    
     local function show()
         if not data.menu then
             createDrawer()
@@ -201,8 +206,7 @@ local function new(margin, args)
         else
         end
         if not data.menu.visible then
-            loadData()
-            reload_top(procMenu,data)
+            refresh()
         end
         data.menu.visible = not data.menu.visible
     end
