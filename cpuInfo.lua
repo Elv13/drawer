@@ -63,9 +63,10 @@ local function reload_top(procMenu,data)
             end
             wdg.kill          = wibox.widget.imagebox()
             wdg.kill:set_image(config.iconPath .. "kill.png")
-
-            wdg.percent:set_text((data.process[i].percent or "N/A").."%")
-            procMenu:add_item({text=data.process[i].name,suffix_widget=wdg.kill,prefix_widget=wdg.percent})
+            
+            --Show process and cpu load
+            wdg.percent:set_text((data.process[i][2] or "N/A").."%")
+            procMenu:add_item({text=data.process[i][3],suffix_widget=wdg.kill,prefix_widget=wdg.percent})
         end
     end
 end
@@ -107,23 +108,15 @@ local function new(margin, args)
         
 
         --Load process information
-        local process = {}
-        util.spawn_with_shell(util.getdir("config")..'/drawer/Scripts/topCpu3.sh > '..util.getdir("config")..'/tmp/topCpu.lua')
-        f = io.open(util.getdir("config")..'/tmp/topCpu.lua','r')
-        if f ~= nil then
-            text3 = f:read("*all")
-            text3 = text3.." return cpuStat"
-            f:close()
-            local afunction = loadstring(text3) or nil
-            if afunction ~= nil then
-                process = afunction()
-            else
-                process = nil
-            end
+        pipe0 = io.popen(util.getdir("config")..'/drawer/Scripts/topCpu.sh')
+        data.process={}
+        i=0
+        for line in pipe0:lines() do
+            data.process[i]=line:split(";")
+        i=i+1
         end
-        if process then
-            data.process = process
-        end
+        pipe0:close()
+        
     end
 
     local function createDrawer()
@@ -150,7 +143,7 @@ local function new(margin, args)
             vicious.register(main_table[i+1][1], vicious.widgets.cpuinf,    function (widget, args)
                                                                                 return string.format("%.2f", args['{cpu'..i..' ghz}'])
                                                                             end,2)
-            --Used cols
+            --Usage
             vicious.register(main_table[i+1][2], vicious.widgets.cpu,'$'..(i+2),1)
         end
         modelWl         = wibox.layout.fixed.horizontal()
@@ -163,7 +156,7 @@ local function new(margin, args)
         cpuWidgetArrayL:set_bottom(10)
         cpuWidgetArrayL:set_widget(tab)
         
-        --Load Cpu model just once
+        --Load Cpu model
         local pipeIn = io.popen('cat /proc/cpuinfo | grep "model name" | cut -d ":" -f2 | head -n 1',"r")
         local cpuName = pipeIn:read("*all") or "N/A"
         pipeIn:close()
