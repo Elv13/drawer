@@ -28,23 +28,30 @@ FREE_SWAP=`cat /proc/meminfo | grep SwapFree | grep -e "[0-9]*" -o`
 FREE_SWAP="`expr $FREE_SWAP / 1024 `"
 USED_SWAP=`expr $TOTAL_SWAP - $FREE_SWAP `
 
-
-echo "$TOTAL_RAM;$FREE_RAM;$USED_RAM"
-echo "$TOTAL_SWAP;$FREE_SWAP;$USED_SWAP"
+echo "memStat = {}"
+echo "memStat[\"ram\"] = {}"
+echo "memStat[\"ram\"][\"total\"] = \"$TOTAL_RAM Mb\""
+echo "memStat[\"ram\"][\"free\"] = \"$FREE_RAM Mb\""
+echo "memStat[\"ram\"][\"used\"] = \"$USED_RAM Mb\""
+echo
+echo "memStat[\"swap\"] = {}"
+echo "memStat[\"swap\"][\"total\"] = \"$TOTAL_SWAP Mb\""
+echo "memStat[\"swap\"][\"free\"] = \"$FREE_SWAP Mb\""
+echo "memStat[\"swap\"][\"used\"] = \"$USED_SWAP Mb\""
 
 PS_AUX=`/bin/ps ax -eo user,stat`
 CUR_USER="nobody"
 COUNT=0
 
 echo
-echo "USERS"
+echo "memStat[\"users\"] = {}"
 USER_LIST=`echo -e "$PS_AUX" | awk '{print $1 }' | sort`
 { for PROCESS in $USER_LIST; do
   if [ $PROCESS == $CUR_USER ]; then
       let COUNT=$COUNT+1
   else
       if [ $COUNT -ne 0 ]; then
-	echo "${CUR_USER};${COUNT}"
+	echo "${COUNT} memStat[\"users\"][\"${CUR_USER}\"] = ${COUNT}"
 	
       fi
       CUR_USER=$PROCESS

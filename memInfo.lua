@@ -66,6 +66,25 @@ local function refreshStat()
         data.process=tmpMem
     end
     
+    --Load memory Statistic
+        local f;
+        pipe0 = io.popen(util.getdir("config")..'/drawer/Scripts/memStatistics.sh')
+        if pipe0 ~= nil then
+            f=loadstring(pipe0:read("*all"))
+            --Load memory statistic data
+            f()
+        else
+            print("Unable to find memStatistics.sh")
+        end
+            
+    if memStat ~= nil and memStat["users"] then
+        data.users = memStat["users"]
+    end
+
+    if memStat ~= nil and memStat["state"] ~= nil then
+        data.state = memStat["state"]
+    end
+    
     if memStat == nil or memStat["ram"] == nil then
       statNotFound = "N/A"
     end
@@ -79,29 +98,7 @@ local function refreshStat()
         tabWdg[ tabWdgRow.SWAP ][ tabWdgCol.USED  ]:set_text( statNotFound or memStat[ "swap"][ "used"  ])
     end
 
-    local f = io.open(util.getdir("config")..'/tmp/memStatistics.lua','r')
-    if f ~= nil then
-        local text3 = f:read("*all")
-        text3 = text3.." return memStat"
-        f:close()
-        local afunction = loadstring(text3)
-        memStat = {}
-        if afunction ~= nil then
-            memStat = afunction()
-        end
-        statNotFound = nil
-    else
-        print("Failed to open memStat")
-        statNotFound = "N/A"
-    end
-
-    if memStat ~= nil and memStat["users"] then
-        data.users = memStat["users"]
-    end
-
-    if memStat ~= nil and memStat["state"] ~= nil then
-        data.state = memStat["state"]
-    end
+    
 
 end
 
