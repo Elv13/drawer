@@ -25,11 +25,11 @@ local cairo        = require( "lgi"                      ).cairo
 local allinone     = require( "widgets.allinone"         )
 
 local capi = { image  = image  ,
-               screen = screen ,
-               widget = widget ,
-               client = client ,
-               mouse  = mouse  ,
-               timer  = timer  }
+    screen = screen ,
+    widget = widget ,
+    client = client ,
+    mouse  = mouse  ,
+    timer  = timer  }
 
 local module = {}
 
@@ -48,35 +48,32 @@ local tabWdgRow = {
     SWAP=2
 }
 
--- util.spawn("/bin/bash -c 'while true;do "..util.getdir("config") .."/Scripts/memStatistics.sh > /tmp/memStatistics.lua && sleep 5;done'")
--- util.spawn("/bin/bash -c 'while true; do "..util.getdir("config") .."/Scripts/topMem2.sh > /tmp/topMem.lua;sleep 5;done'")
-  
 local function refreshStat()
     --Load process information
-        local pipe0 = io.popen(util.getdir("config")..'/drawer/Scripts/topMem.sh')
-        local tmpMem={}
-        memStat = {}
-        local i=0
-        for line in pipe0:lines() do
-            tmpMem[i]=line:split(";")
+    local pipe0 = io.popen(util.getdir("config")..'/drawer/Scripts/topMem.sh')
+    local tmpMem={}
+    memStat = {}
+    local i=0
+    for line in pipe0:lines() do
+        tmpMem[i]=line:split(";")
         i=i+1
-        end
-        pipe0:close()
+    end
+    pipe0:close()
     if tmpMem ~= nil then
         data.process=tmpMem
     end
-    
+
     --Load memory Statistic
-        local f;
-        pipe0 = io.popen(util.getdir("config")..'/drawer/Scripts/memStatistics.sh')
-        if pipe0 ~= nil then
-            f=loadstring(pipe0:read("*all"))
-            --Load memory statistic data
-            f()
-        else
-            print("Unable to find memStatistics.sh")
-        end
-            
+    local f;
+    pipe0 = io.popen(util.getdir("config")..'/drawer/Scripts/memStatistics.sh')
+    if pipe0 ~= nil then
+        f=loadstring(pipe0:read("*all"))
+        --Load memory statistic data
+        f()
+    else
+        print("Unable to find memStatistics.sh")
+    end
+
     if memStat ~= nil and memStat["users"] then
         data.users = memStat["users"]
     end
@@ -84,9 +81,9 @@ local function refreshStat()
     if memStat ~= nil and memStat["state"] ~= nil then
         data.state = memStat["state"]
     end
-    
+
     if memStat == nil or memStat["ram"] == nil then
-      statNotFound = "N/A"
+        statNotFound = "N/A"
     end
 
     if tabWdg then
@@ -98,144 +95,144 @@ local function refreshStat()
         tabWdg[ tabWdgRow.SWAP ][ tabWdgCol.USED  ]:set_text( statNotFound or memStat[ "swap"][ "used"  ])
     end
 
-    
+
 
 end
 
 local function reload_user(usrMenu,data)
-  local totalUser = 0
-  local sorted = {}
-  for v, i in pairs(data.users or {}) do
-    local tmp = tonumber(i)*10
-    while sorted[tmp] do
-      tmp = tmp + 1
+    local totalUser = 0
+    local sorted = {}
+    for v, i in pairs(data.users or {}) do
+        local tmp = tonumber(i)*10
+        while sorted[tmp] do
+            tmp = tmp + 1
+        end
+        sorted[tmp] = {value=v,key=i}
     end
-    sorted[tmp] = {value=v,key=i}
-  end
-  for i2, v2 in pairs(sorted) do
-    local v,i= v2.value,v2.key
-    local anUser = wibox.widget.textbox()
-    anUser:set_text(i)
-    totalUser = totalUser +1
-    usrMenu:add_item({text=v,suffix_widget=anUser})
-  end
-  return totalUser
+    for i2, v2 in pairs(sorted) do
+        local v,i= v2.value,v2.key
+        local anUser = wibox.widget.textbox()
+        anUser:set_text(i)
+        totalUser = totalUser +1
+        usrMenu:add_item({text=v,suffix_widget=anUser})
+    end
+    return totalUser
 end
 
 local function reload_top(topMenu,data)
-  for i = 0, #(data.process or {}) do
-    if data.process ~= nil then
-      local aMem = wibox.widget.textbox()
-      aMem:set_text(data.process[i][2])
-      aMem.fit = function()
-        return 58,topMenu.item_height
-      end
+    for i = 0, #(data.process or {}) do
+        if data.process ~= nil then
+            local aMem = wibox.widget.textbox()
+            aMem:set_text(data.process[i][2])
+            aMem.fit = function()
+                return 58,topMenu.item_height
+            end
 
-      for k2,v2 in ipairs(capi.client.get()) do
-        if v2.class:lower() == data.process[i][3]:lower() or v2.name:lower():find(data.process[i][3]:lower()) ~= nil then
-          aMem.bg_image = v2.icon
-          break
+            for k2,v2 in ipairs(capi.client.get()) do
+                if v2.class:lower() == data.process[i][3]:lower() or v2.name:lower():find(data.process[i][3]:lower()) ~= nil then
+                    aMem.bg_image = v2.icon
+                    break
+                end
+            end
+
+            aMem.draw = function(self,w, cr, width, height)
+                cr:save()
+                cr:set_source(color(topMenu.bg_alternate))
+                cr:rectangle(0,0,width-height/2,height)
+                cr:fill()
+                --                 if aMem.bg_image then
+                --                     cr:set_source(aMem.bg_image)
+                --                     cr:paint()
+                --                 end
+
+                cr:set_source_surface(themeutils.get_beg_arrow2({bg_color=topMenu.bg_alternate}),width-height/2,0)
+                cr:paint()
+                cr:restore()
+                wibox.widget.textbox.draw(self,w, cr, width, height)
+            end
+
+            testImage2       = wibox.widget.imagebox()
+            testImage2:set_image(config.iconPath .. "kill.png")
+
+            topMenu:add_item({text=data.process[i][3] or "N/A",prefix_widget=aMem,suffix_widget=testImage2})
         end
-      end
-
-      aMem.draw = function(self,w, cr, width, height)
-        cr:save()
-        cr:set_source(color(topMenu.bg_alternate))
-        cr:rectangle(0,0,width-height/2,height)
-        cr:fill()
---                 if aMem.bg_image then
---                     cr:set_source(aMem.bg_image)
---                     cr:paint()
---                 end
-        
-        cr:set_source_surface(themeutils.get_beg_arrow2({bg_color=topMenu.bg_alternate}),width-height/2,0)
-        cr:paint()
-        cr:restore()
-        wibox.widget.textbox.draw(self,w, cr, width, height)
-      end
-
-      testImage2       = wibox.widget.imagebox()
-      testImage2:set_image(config.iconPath .. "kill.png")
-
-      topMenu:add_item({text=data.process[i][3] or "N/A",prefix_widget=aMem,suffix_widget=testImage2})
     end
-  end
 end
 
 local usrMenu,typeMenu,topMenu
 
 local function repaint()
-  mainMenu = menu({arrow_x=90,nokeyboardnav=true,item_width=198,width=200,arrow_type=radical.base.arrow_type.CENTERED})
-  mainMenu:add_widget(radical.widgets.header(mainMenu,"USAGE"),{height = 20 , width = 200})
+    mainMenu = menu({arrow_x=90,nokeyboardnav=true,item_width=198,width=200,arrow_type=radical.base.arrow_type.CENTERED})
+    mainMenu:add_widget(radical.widgets.header(mainMenu,"USAGE"),{height = 20 , width = 200})
 
-  local m3 = wibox.layout.margin()
-  m3:set_margins(3)
-  m3:set_bottom(10)
-  local tab,wdgs = radtab({
-      {"","",""},
-      {"","",""}},
-      {row_height=20,v_header = {"Ram","Swap"},
-      h_header = {"Total","Free","Used"}
-  })
-  tabWdg = wdgs
-  m3:set_widget(tab)
-  mainMenu:add_widget(m3,{width = 200})
-  mainMenu:add_widget(radical.widgets.header(mainMenu,"USERS"),{height = 20, width = 200})
-  local memStat
+    local m3 = wibox.layout.margin()
+    m3:set_margins(3)
+    m3:set_bottom(10)
+    local tab,wdgs = radtab({
+            {"","",""},
+            {"","",""}},
+        {row_height=20,v_header = {"Ram","Swap"},
+            h_header = {"Total","Free","Used"}
+        })
+    tabWdg = wdgs
+    m3:set_widget(tab)
+    mainMenu:add_widget(m3,{width = 200})
+    mainMenu:add_widget(radical.widgets.header(mainMenu,"USERS"),{height = 20, width = 200})
+    local memStat
 
-  usrMenu = embed({max_items=5})
-  reload_user(usrMenu,data)
-  mainMenu:add_embeded_menu(usrMenu)
+    usrMenu = embed({max_items=5})
+    reload_user(usrMenu,data)
+    mainMenu:add_embeded_menu(usrMenu)
 
-  mainMenu:add_widget(radical.widgets.header(mainMenu,"STATE"),{height = 20 , width = 200})
+    mainMenu:add_widget(radical.widgets.header(mainMenu,"STATE"),{height = 20 , width = 200})
 
-  typeMenu = radical.widgets.piechart()
-  mainMenu:add_widget(typeMenu,{height = 100 , width = 100})
-  typeMenu:set_data(data.state)
+    typeMenu = radical.widgets.piechart()
+    mainMenu:add_widget(typeMenu,{height = 100 , width = 100})
+    typeMenu:set_data(data.state)
 
-  local imb = wibox.widget.imagebox()
-  imb:set_image(beautiful.path .. "Icon/reload.png")
-  mainMenu:add_widget(radical.widgets.header(mainMenu,"PROCESS",{suffix_widget=imb}),{height = 20 , width = 200})
+    local imb = wibox.widget.imagebox()
+    imb:set_image(beautiful.path .. "Icon/reload.png")
+    mainMenu:add_widget(radical.widgets.header(mainMenu,"PROCESS",{suffix_widget=imb}),{height = 20 , width = 200})
 
-  topMenu = embed({max_items=3})
-  reload_top(topMenu,data)
-  mainMenu:add_embeded_menu(topMenu)
+    topMenu = embed({max_items=3})
+    reload_top(topMenu,data)
+    mainMenu:add_embeded_menu(topMenu)
 
-  return mainMenu
+    return mainMenu
 end
 
 local function update()
-  usrMenu:clear()
-  topMenu:clear()
-  reload_user(usrMenu,data)
-  typeMenu:set_data(data.state)
-  reload_top(topMenu,data)
+    usrMenu:clear()
+    topMenu:clear()
+    reload_user(usrMenu,data)
+    typeMenu:set_data(data.state)
+    reload_top(topMenu,data)
 end
 
 local function new(margin, args)
-  local visible = false
-  function toggle()
-      if not data.menu then
-          refreshStat()
-          data.menu = repaint()
-      end
-      visible = not visible
-      if visible then
-          refreshStat()
-          update()
-      end
-      data.menu.visible = false
-      data.menu.visible = visible
-  end
+    local visible = false
+    function toggle()
+        if not data.menu then
+            refreshStat()
+            data.menu = repaint()
+        end
+        visible = not visible
+        if visible then
+            refreshStat()
+            update()
+        end
+        data.menu.visible = false
+        data.menu.visible = visible
+    end
 
-  local buttonclick = util.table.join(button({ }, 1, function (geo) toggle();data.menu.parent_geometry=geo end))
+    local buttonclick = util.table.join(button({ }, 1, function (geo) toggle();data.menu.parent_geometry=geo end))
 
-  local volumewidget2 = allinone()
-  volumewidget2:set_icon(config.iconPath .. "cpu.png")
-  vicious.register(volumewidget2, vicious.widgets.mem, '$1', 1, 'mem')
+    local volumewidget2 = allinone()
+    volumewidget2:set_icon(config.iconPath .. "cpu.png")
+    vicious.register(volumewidget2, vicious.widgets.mem, '$1', 1, 'mem')
 
-  volumewidget2:buttons (buttonclick)
-  return volumewidget2
+    volumewidget2:buttons (buttonclick)
+    return volumewidget2
 end
 
 return setmetatable(module, { __call = function(_, ...) return new(...) end })
