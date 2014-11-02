@@ -28,29 +28,29 @@ local capi = { widget = widget , client = client ,
 local module = {}
 
 --DATA
-local data, connectionInfo, protocolStat, appStat = {},{},{},{}
-
+local protocolStat, appStat = {},{}
+local data={connectionInfo={}}
+local connLookup={ ["site"]=1,["pid"]=2,["application"]=3,["protocol"]=4}
 --WIDGET
 local ip4Info          , ip6Info          , localInfo        , netUsageUp
 local netUsageDown     , appHeader        , netUpGraph       , netDownGraph
 local ip4lbl           , ip6lbl           , mainMenu
 
 local function update()
-    local connectionInfo
-    local f = io.open('/tmp/connectedHost.lua','r')
-    if f ~= nil then
-        local text3 = f:read("*all") .. " return connectionInfo"
-        f:close()
-        afunction   = loadstring(text3)
-        if afunction == nil then
-            return { count = o, widgets = widgetTable2}
+    local connectionInfo={}
+    --Load connectionInfo data
+    local pipe0 = io.popen(util.getdir("config")..'/drawer/Scripts/connectedHost3.sh')
+    local connN = tonumber(pipe0:read("*line"))
+    local i=0
+    for line in pipe0:lines() do
+        print("Line:",line)
+        data.connectionInfo[i]=line:split(",")
+        for j=1,4 do
+            print("D:",data.connectionInfo[i][j])
         end
-        connectionInfo = afunction()
+        i=i+1
     end
-
-    if connectionInfo ~= nil then
-        data.connectionInfo = connectionInfo
-    end
+    pipe0:close()
 
     f = io.popen('/bin/ifconfig | grep -e "inet[a-z: ]*[0-9.]*" -o |  grep -e "[0-9.]*" -o')
     local ip4Value = "<i>"..(f:read("*line") or "") .. "</i>"
@@ -90,21 +90,21 @@ local function reload_conn(connMenu,data)
                 cr:restore()
                 wibox.widget.textbox.draw(self,w, cr, width, height)
             end
-            application:set_markup("<b>"..data.connectionInfo[i]['protocol'].." </b>")
+            application:set_markup("<b>"..data.connectionInfo[i][connLookup['protocol']].." </b>")
             application:set_align("right")
 
             local icon = nil
             for k2,v2 in ipairs(capi.client.get()) do
-                if v2.class:lower() == data.connectionInfo[i]['application']:lower() or v2.name:lower():find(data.connectionInfo[i]['application']:lower()) ~= nil then
+                if v2.class:lower() == data.connectionInfo[i][connLookup['application']]:lower() or v2.name:lower():find(data.connectionInfo[i][connLookup['application']]:lower()) ~= nil then
                     icon  = v2.icon
                     break
                 end
             end
 --             print("adding",data.connectionInfo[i]['application'  ],appStat[data.connectionInfo[i]['application'  ] ] )
-            appStat[data.connectionInfo[i]['application'  ] ] = (appStat[data.connectionInfo[i]['application'  ] ]or 0) + 1
-            protocolStat[data.connectionInfo[i]['protocol'] ] = (protocolStat[data.connectionInfo[i]['protocol'   ] ] or 0) + 1
+            appStat[data.connectionInfo[i][connLookup['application'  ]] ] = (appStat[data.connectionInfo[i][connLookup['application' ] ] ]or 0) + 1
+            protocolStat[data.connectionInfo[i][connLookup['protocol']] ] = (protocolStat[data.connectionInfo[i][connLookup['protocol' ]  ] ] or 0) + 1
 --             print("now",appStat[data.connectionInfo[i]['application'  ] ])
-            connMenu:add_item({text=(data.connectionInfo[i]['site'] or ""),icon=icon,suffix_widget=application})
+            connMenu:add_item({text=(data.connectionInfo[i][connLookup['site']] or ""),icon=icon,suffix_widget=application})
         end
     end
 end
