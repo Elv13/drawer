@@ -23,7 +23,7 @@ local cairo        = require( "lgi"                      ).cairo
 local allinone     = require( "widgets.allinone"         )
 
 local capi = { widget = widget , client = client ,
-               mouse  = mouse  , timer  = timer  }
+    mouse  = mouse  , timer  = timer  }
 
 local module = {}
 
@@ -43,11 +43,8 @@ local function update()
     local connN = tonumber(pipe0:read("*line"))
     local i=0
     for line in pipe0:lines() do
-        print("Line:",line)
+        --print("Line:",line)
         data.connectionInfo[i]=line:split(",")
-        for j=1,4 do
-            print("D:",data.connectionInfo[i][j])
-        end
         i=i+1
     end
     pipe0:close()
@@ -100,10 +97,10 @@ local function reload_conn(connMenu,data)
                     break
                 end
             end
---             print("adding",data.connectionInfo[i]['application'  ],appStat[data.connectionInfo[i]['application'  ] ] )
+            --             print("adding",data.connectionInfo[i]['application'  ],appStat[data.connectionInfo[i]['application'  ] ] )
             appStat[data.connectionInfo[i][connLookup['application'  ]] ] = (appStat[data.connectionInfo[i][connLookup['application' ] ] ]or 0) + 1
             protocolStat[data.connectionInfo[i][connLookup['protocol']] ] = (protocolStat[data.connectionInfo[i][connLookup['protocol' ]  ] ] or 0) + 1
---             print("now",appStat[data.connectionInfo[i]['application'  ] ])
+            --             print("now",appStat[data.connectionInfo[i]['application'  ] ])
             connMenu:add_item({text=(data.connectionInfo[i][connLookup['site']] or ""),icon=icon,suffix_widget=application})
         end
     end
@@ -121,7 +118,7 @@ local function reload_appstat(appMenu,data)
                 break
             end
         end
---         print("this",i)
+        --         print("this",i)
         appMenu:add_item({text=v,suffix_widget=testImage2,icon=icon,underlay = i})
     end
 end
@@ -145,7 +142,7 @@ local function repaint(margin)
     ipInfoH2l:add(ip6Info)
     ipInfoVl:add(ipInfoH1l)
     ipInfoVl:add(ipInfoH2l)
-    
+
     local ipm = wibox.layout.margin()
     ipm:set_widget(ipInfoVl)
     ipm:set_top(5)
@@ -249,13 +246,13 @@ local function ip_label_draw(self,w, cr, width, height)
         cr:set_source_surface(themeutils.get_beg_arrow2({bg_color=beautiful.bg_alternate}),width-height/2,2)
         cr:paint()
         cr:restore()
-    --     cr:set_source(color(beautiful.fg_normal))
+        --     cr:set_source(color(beautiful.fg_normal))
         wibox.widget.textbox.draw(self,w, cr, width, height)
     end
 end
 
 local function ip_label_fit(...)
---     local w,h = wibox.widget.textbox(...)
+    --     local w,h = wibox.widget.textbox(...)
     return 42,20
 end
 
