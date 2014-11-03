@@ -141,9 +141,12 @@ local function new(mywibox3,left_margin)
                 end),
             button({ }, 4, function()
                     util.spawn_with_shell("amixer sset Master 2%+ >/dev/null")
+                    volumewidget2.percent=volumewidget2.percent+0.02
+                    print("V:",volumewidget2.percent)
                 end),
             button({ }, 5, function()
                     util.spawn_with_shell("amixer sset Master 2%- >/dev/null")
+                    volumewidget2.percent=volumewidget2.percent-0.02
                 end)
         )
     else
@@ -165,14 +168,16 @@ local function new(mywibox3,left_margin)
                 end),
             button({ }, 4, function()
                     util.spawn_with_shell("pactl set-sink-volume `pactl list sinks | grep -A 1 'State: RUNNING' | tail -n 1 | cut -d ' ' -f 2` -- +2%")
+                    volumewidget2.percent=volumewidget2.percent+0.02
                 end),
             button({ }, 5, function()
                     util.spawn_with_shell('pactl set-sink-volume `pactl list sinks | grep -A 1 "State: RUNNING" | tail -n 1 | cut -d " " -f 2` -- -2%')
+                    volumewidget2.percent=volumewidget2.percent+0.02
                 end)
         )
     end
 
-    vicious.register(volumewidget2, amixer_volume_int, '$1')
+    vicious.register(volumewidget2, amixer_volume_int, '$1',5)
     volumewidget2:buttons(btn)
     return volumewidget2
 end
