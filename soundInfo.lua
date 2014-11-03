@@ -24,6 +24,7 @@ local volumewidget2 = nil
 
 --Pulseaudio pid
 local pavuId = -1
+local pavuSinkN=0
 
 -- 0:undefined 1:alsa 2:pulseaudio
 local soundService = 0
@@ -31,7 +32,7 @@ local soundService = 0
 function amixer_volume_int(format)
     local f
     if soundService == 2 then
-        f = io.popen('pactl list sinks | grep -A 8 "State: RUNNING" | tail -n 1 | cut -d "/" -f 2 | grep -o -e "[0-9]*"')
+        f = io.popen('pactl list sinks | grep -A 9 "Sink #'..pavuSinkN..'" | tail -n 1 | cut -d "/" -f 2 | grep -o -e "[0-9]*"')
     else
         f = io.popen('amixer sget Master 2> /dev/null | tail -n1 |cut -f 7 -d " " | grep -o -e "[0-9]*"')
     end
@@ -102,15 +103,17 @@ function soundInfo()
     f:close()
 end
 
-local function new(mywibox3,left_margin)
+local function new(mywibox3,pavuSink)
     if volumewidget2 then return volumewidget2 end
     volumewidget2 = allinone()
     volumewidget2:set_icon(config.iconPath .. "vol.png")
 
     --Check if pulseaudio is running
-    local f = io.popen('ps aux | grep -c pulse')
-    --print("f:",f:read("*line"))
-    soundService = (tonumber(f:read("*line")) or 0)
+    local f = io.popen('whereis pavucontrol | cut -d":" -f2| wc -c')
+    soundService = (tonumber(f:read("*all")) or 0)
+    if soundService > 2 then soundService=2
+    else soundService=1 end
+    
     print("Ss:",soundService)
     f:close()
 
@@ -118,7 +121,7 @@ local function new(mywibox3,left_margin)
     if (soundService <= 1) then
         --If it's not running use alsa
         soundService=1
-        print("Pulseaudio not found")
+        print("pavucontrol not found")
 
         btn = util.table.join(
             button({ }, 1, function(geo)
@@ -139,14 +142,32 @@ local function new(mywibox3,left_margin)
                 end),
             button({ }, 4, function()
                     util.spawn_with_shell("amixer sset Master 2%+ >/dev/null")
+                    if volumewidget2.percent > 0.98 then volumewidget2.percent=1
+                    else volumewidget2.percent=volumewidget2.percent+0.02 end
+                    print("V:",volumewidget2.percent)
                 end),
             button({ }, 5, function()
                     util.spawn_with_shell("amixer sset Master 2%- >/dev/null")
+                    if volumewidget2.percent < 0.02 then volumewidget2.percent=0
+                    else volumewidget2.percent=volumewidget2.percent-0.02 end
                 end)
         )
     else
         --If pulseaudio is running
         soundService=2
+        --Check for argument sink
+        if pavuSink ~= nil then
+            local pipe0=io.popen('pactl list sinks | grep -cA 2 "^Sink #'..pavusink..'"')
+            if tonumber(pipe0:read("*all") or 0) ~= 1 then
+                --If exists use it
+                pavuSinkN=pavusink
+            else
+                --If not use the first
+                pavusinkN=0
+            end
+            pipe0:close()
+        end
+        
         btn = util.table.join(
             button({ }, 1, function(geo)
                     if pavuId == -1 then
@@ -159,18 +180,27 @@ local function new(mywibox3,left_margin)
                     end
                 end),
             button({ }, 3, function()
-                    util.spawn_with_shell("pactl set-sink-mute `pactl list sinks | grep -A 1 'State: RUNNING' | tail -n 1 | cut -d ' ' -f 2` toggle")
+                                util.spawn_with_shell("pactl set-sink-mute "..pavuSinkN.." toggle")
                 end),
             button({ }, 4, function()
-                    util.spawn_with_shell("pactl set-sink-volume `pactl list sinks | grep -A 1 'State: RUNNING' | tail -n 1 | cut -d ' ' -f 2` -- +2%")
+                                if volumewidget2.percent > 1.48 then
+                                    volumewidget2.percent=1.5
+                                    util.spawn_with_shell("pactl set-sink-volume "..pavuSinkN.." -- 150%")
+                                else
+                                    volumewidget2.percent=volumewidget2.percent+0.02
+                                    util.spawn_with_shell("pactl set-sink-volume "..pavuSinkN.." -- +2%")
+                                end
+                    
                 end),
             button({ }, 5, function()
-                    util.spawn_with_shell('pactl set-sink-volume `pactl list sinks | grep -A 1 "State: RUNNING" | tail -n 1 | cut -d " " -f 2` -- -2%')
+                        util.spawn_with_shell("pactl set-sink-volume "..pavuSinkN.." -- -2%")
+                    if volumewidget2.percent < 0.02 then volumewidget2.percent=0
+                    else volumewidget2.percent=volumewidget2.percent-0.02 end
                 end)
         )
     end
 
-    vicious.register(volumewidget2, amixer_volume_int, '$1')
+    vicious.register(volumewidget2, amixer_volume_int, '$1',5)
     volumewidget2:buttons(btn)
     return volumewidget2
 end
