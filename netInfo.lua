@@ -49,10 +49,10 @@ local function update()
     end
     pipe0:close()
 
-    f = io.popen('/bin/ifconfig | grep -e "inet[a-z: ]*[0-9.]*" -o |  grep -e "[0-9.]*" -o')
+    f = io.popen('/sbin/ifconfig | grep -e "inet[a-z: ]*[0-9.]*" -o |  grep -e "[0-9.]*" -o')
     local ip4Value = "<i>"..(f:read("*line") or "") .. "</i>"
     f:close()
-    f = io.popen('/bin/ifconfig | grep -e "inet6[a-z: ]*[0-9.A-Fa-f;:]*" -o | awk \'{print $(NF)}\'')
+    f = io.popen('/sbin/ifconfig | grep -e "inet6[a-z: ]*[0-9.A-Fa-f;:]*" -o | awk \'{print $(NF)}\'')
     local ip6Value = "<i>"..(f:read("*line") or "") .. "</i>"
     f:close()
 
