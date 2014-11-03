@@ -141,12 +141,14 @@ local function new(mywibox3,left_margin)
                 end),
             button({ }, 4, function()
                     util.spawn_with_shell("amixer sset Master 2%+ >/dev/null")
-                    volumewidget2.percent=volumewidget2.percent+0.02
+                    if volumewidget2.percent > 0.98 then volumewidget2.percent=1
+                    else volumewidget2.percent=volumewidget2.percent+0.02 end
                     print("V:",volumewidget2.percent)
                 end),
             button({ }, 5, function()
                     util.spawn_with_shell("amixer sset Master 2%- >/dev/null")
-                    volumewidget2.percent=volumewidget2.percent-0.02
+                    if volumewidget2.percent < 0.02 then volumewidget2.percent=0
+                    else volumewidget2.percent=volumewidget2.percent-0.02 end
                 end)
         )
     else
@@ -168,11 +170,14 @@ local function new(mywibox3,left_margin)
                 end),
             button({ }, 4, function()
                     util.spawn_with_shell("pactl set-sink-volume `pactl list sinks | grep -A 1 'State: RUNNING' | tail -n 1 | cut -d ' ' -f 2` -- +2%")
-                    volumewidget2.percent=volumewidget2.percent+0.02
+                    if volumewidget2.percent > 0.98 then volumewidget2.percent=1
+                    else volumewidget2.percent=volumewidget2.percent+0.02 end
+                    
                 end),
             button({ }, 5, function()
                     util.spawn_with_shell('pactl set-sink-volume `pactl list sinks | grep -A 1 "State: RUNNING" | tail -n 1 | cut -d " " -f 2` -- -2%')
-                    volumewidget2.percent=volumewidget2.percent+0.02
+                    if volumewidget2.percent < 0.02 then volumewidget2.percent=0
+                    else volumewidget2.percent=volumewidget2.percent-0.02 end
                 end)
         )
     end
