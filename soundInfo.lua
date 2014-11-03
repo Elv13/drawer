@@ -108,9 +108,11 @@ local function new(mywibox3,left_margin)
     volumewidget2:set_icon(config.iconPath .. "vol.png")
 
     --Check if pulseaudio is running
-    local f = io.popen('ps aux | grep -c pulse')
-    --print("f:",f:read("*line"))
-    soundService = (tonumber(f:read("*line")) or 0)
+    local f = io.popen('whereis pavucontrol | cut -d":" -f2| wc -c')
+    soundService = (tonumber(f:read("*all")) or 0)
+    if soundService > 2 then soundService=2
+    else soundService=1 end
+    
     print("Ss:",soundService)
     f:close()
 
@@ -118,7 +120,7 @@ local function new(mywibox3,left_margin)
     if (soundService <= 1) then
         --If it's not running use alsa
         soundService=1
-        print("Pulseaudio not found")
+        print("pavucontrol not found")
 
         btn = util.table.join(
             button({ }, 1, function(geo)
