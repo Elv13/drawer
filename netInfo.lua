@@ -48,7 +48,7 @@ local function update()
         i=i+1
     end
     pipe0:close()
-
+--AXTODO: check for ifconfig position in $PATH
     f = io.popen('/sbin/ifconfig | grep -e "inet[a-z: ]*[0-9.]*" -o |  grep -e "[0-9.]*" -o')
     local ip4Value = "<i>"..(f:read("*line") or "") .. "</i>"
     f:close()
