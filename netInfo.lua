@@ -85,6 +85,25 @@ local function update()
                         connMenu:add_item({text=(data.connectionInfo[i][connLookup['site']] or ""),icon=icon,suffix_widget=application})
                     end
                 end
+                
+                --Repaint protocol stat graph
+                protMenu:set_data(protocolStat)
+                
+                --Repaint application stat
+                appMenu:clear()
+                for v, i in next, appStat do
+                    testImage2             = wibox.widget.imagebox()
+                    testImage2:set_image(config.iconPath .. "kill.png"       )
+                    local icon =nil
+                    for k2,v2 in ipairs(capi.client.get()) do
+                        if v2.class:lower() == v:lower() or v2.name:lower():find(v:lower()) ~= nil then
+                            icon  = v2.icon
+                            break
+                        end
+                    end
+                    --         print("this",i)
+                    appMenu:add_item({text=v,suffix_widget=testImage2,icon=icon,underlay = i})
+                end
             else
                 -- Load line into data
                 if content == nil then print ("This shouldn't happen...")
@@ -119,35 +138,6 @@ local function update()
 
     localInfo:set_text(localValue)
 
-end
-
-local function reload_conn(connMenu,data)
-
-end
-
-local function reload_appstat(appMenu,data)
-    appMenu:clear()
-    for v, i in next, appStat do
-        testImage2             = wibox.widget.imagebox()
-        testImage2:set_image(config.iconPath .. "kill.png"       )
-        local icon =nil
-        for k2,v2 in ipairs(capi.client.get()) do
-            if v2.class:lower() == v:lower() or v2.name:lower():find(v:lower()) ~= nil then
-                icon  = v2.icon
-                break
-            end
-        end
-        --         print("this",i)
-        appMenu:add_item({text=v,suffix_widget=testImage2,icon=icon,underlay = i})
-    end
-end
-
-
-
-local function update2()
-    reload_conn(connMenu,data)
-    protMenu:set_data(protocolStat)
-    reload_appstat(appMenu,data)
 end
 
 local function repaint(margin)
@@ -196,6 +186,7 @@ local function repaint(margin)
 
     local imb = wibox.widget.imagebox()
     imb:set_image(beautiful.path .. "Icon/reload.png")
+    imb:buttons(button({ }, 1, function (geo) update() end))
     mainMenu:add_widget(radical.widgets.header(mainMenu,"CONNECTIONS",{suffix_widget=imb}),{height = 20 , width = 200})
 
     if data.connectionInfo ~= nil then
@@ -313,11 +304,10 @@ local function new(margin, args)
     ip6lbl.draw       = ip_label_draw
     local function show()
         if not data.menu or data.menu.visible ~= true then
-            update()
             if not data.menu then
                 data.menu = repaint(margin)
             end
-            update2()
+            update()
             data.menu.visible = true
         else
             data.menu.visible = false
