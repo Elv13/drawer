@@ -32,6 +32,7 @@ local module = {}
 local protocolStat, appStat = {},{}
 local data={connectionInfo={}}
 local connLookup={ ["site"]=1,["pid"]=2,["application"]=3,["protocol"]=4}
+local netConfig={ifconfigExec={}}
 --WIDGET
 local ip4Info          , ip6Info          , localInfo        , netUsageUp
 local netUsageDown     , appHeader        , netUpGraph       , netDownGraph
@@ -97,13 +98,12 @@ local function update()
             connNum=connNum-1
         end)
 
+    
 
-
-    --AXTODO: check for ifconfig position in $PATH
-    f = io.popen('/sbin/ifconfig | grep -e "inet[a-z: ]*[0-9.]*" -o |  grep -e "[0-9.]*" -o')
+    local f = io.popen(netConfig.ifconfigExec..' | grep -e "inet[a-z: ]*[0-9.]*" -o |  grep -e "[0-9.]*" -o')
     local ip4Value = "<i>"..(f:read("*line") or "") .. "</i>"
     f:close()
-    f = io.popen('/sbin/ifconfig | grep -e "inet6[a-z: ]*[0-9.A-Fa-f;:]*" -o | awk \'{print $(NF)}\'')
+    f = io.popen(netConfig.ifconfigExec..' | grep -e "inet6[a-z: ]*[0-9.A-Fa-f;:]*" -o | awk \'{print $(NF)}\'')
     local ip6Value = "<i>"..(f:read("*line") or "") .. "</i>"
     f:close()
 
@@ -363,6 +363,11 @@ local function new(margin, args)
         cr:restore()
     end
 
+    --Find ifconfig path or use plain ifconfig
+    local f = io.popen('whereis ifconfig | sed "s/ /\\n/g" | grep ifconfig$')
+    netConfig.ifconfigExec = f:read("*line") or "ifconfig"
+    f:close()
+    
     --Initial menu loading quick fix
     show()
     show()
