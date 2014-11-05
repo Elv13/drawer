@@ -124,7 +124,9 @@ local function update()
     local f = io.popen("ip addr | grep 'state UP' -A2 | tail -n1 | awk '{print $2}' | cut -f1  -d'/'")
     local ip4Value = "<i>"..(f:read("*line") or "") .. "</i>"
     f:close()
-    f = io.popen(netConfig.ifconfigExec..' | grep -e "inet6[a-z: ]*[0-9.A-Fa-f;:]*" -o | awk \'{print $(NF)}\'')
+    
+    
+    f = io.popen('dig +short myip.opendns.com @resolver1.opendns.com')
     local ip6Value = "<i>"..(f:read("*line") or "") .. "</i>"
     f:close()
 
