@@ -363,6 +363,10 @@ local function new(margin, args)
         cr:restore()
     end
 
+    --Initial menu loading quick fix
+    show()
+    show()
+    
     return l
 end
 
