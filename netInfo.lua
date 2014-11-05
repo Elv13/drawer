@@ -121,7 +121,7 @@ local function update()
 
     
 
-    local f = io.popen(netConfig.ifconfigExec..' | grep -e "inet[a-z: ]*[0-9.]*" -o |  grep -e "[0-9.]*" -o')
+    local f = io.popen("ip addr | grep 'state UP' -A2 | tail -n1 | awk '{print $2}' | cut -f1  -d'/'")
     local ip4Value = "<i>"..(f:read("*line") or "") .. "</i>"
     f:close()
     f = io.popen(netConfig.ifconfigExec..' | grep -e "inet6[a-z: ]*[0-9.A-Fa-f;:]*" -o | awk \'{print $(NF)}\'')
