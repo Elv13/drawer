@@ -43,7 +43,6 @@ local connMenu,protMenu,appMenu
 local connNum = -1
 
 local function update()
-    local connectionInfo={}
     --Load connectionInfo data (ASYNC)
     fd_async.exec.command(util.getdir("config")..'/drawer/Scripts/connectedHost3.sh'):connect_signal("new::line",function(content)
             --Check if first line
@@ -56,6 +55,9 @@ local function update()
                 connMenu:clear()
                 for i=0 , #(data.connectionInfo or {}) do
                     if data.connectionInfo[i] then
+                        -- Reset application connection count
+                        appStat[data.connectionInfo[i][connLookup['application'  ]] ] = 0
+                        
                         local application          = wibox.widget.textbox()
                         application.fit = function()
                             return 48,connMenu.item_height
