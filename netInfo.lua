@@ -193,13 +193,13 @@ local function repaint(margin)
         connMenu = embed({width=198,max_items=5,has_decoration=false,has_side_deco=true})
         mainMenu:add_embeded_menu(connMenu)
     end
-    mainMenu:add_widget(radical.widgets.header(mainMenu,"PROTOCOLS",{suffix_widget=imb}),{height = 20 , width = 200})
+    mainMenu:add_widget(radical.widgets.header(mainMenu,"PROTOCOLS"),{height = 20 , width = 200})
 
     protMenu = radical.widgets.piechart()
     mainMenu:add_widget(protMenu,{height = 100 , width = 100})
     protMenu:set_data(protocolStat)
 
-    mainMenu:add_widget(radical.widgets.header(mainMenu,"APPLICATIONS",{suffix_widget=imb}),{height = 20 , width = 200})
+    mainMenu:add_widget(radical.widgets.header(mainMenu,"APPLICATIONS"),{height = 20 , width = 200})
 
     appMenu = embed({width=198,max_items=3,has_decoration=false,has_side_deco=true})
     mainMenu:add_embeded_menu(appMenu)
