@@ -21,6 +21,7 @@ local radical      = require( "radical"                  )
 local color        = require( "gears.color"              )
 local cairo        = require( "lgi"                      ).cairo
 local allinone     = require( "widgets.allinone"         )
+local fd_async = require("utils.fd_async")
 
 local capi = { widget = widget , client = client ,
     mouse  = mouse  , timer  = timer  }
@@ -36,19 +37,69 @@ local ip4Info          , ip6Info          , localInfo        , netUsageUp
 local netUsageDown     , appHeader        , netUpGraph       , netDownGraph
 local ip4lbl           , ip6lbl           , mainMenu
 
+--MENUS
+local connMenu,protMenu,appMenu
+local connNum = -1
+
 local function update()
     local connectionInfo={}
-    --Load connectionInfo data
-    local pipe0 = io.popen(util.getdir("config")..'/drawer/Scripts/connectedHost3.sh')
-    local connN = tonumber(pipe0:read("*line"))
-    local i=0
-    for line in pipe0:lines() do
-        --print("Line:",line)
-        data.connectionInfo[i]=line:split(",")
-        i=i+1
-    end
-    pipe0:close()
---AXTODO: check for ifconfig position in $PATH
+    --Load connectionInfo data (ASYNC)
+    fd_async.exec.command(util.getdir("config")..'/drawer/Scripts/connectedHost3.sh'):connect_signal("new::line",function(content)
+            --Check if first line
+            if connNum == -1 then
+                --Get connections number (First line)
+                connNum=tonumber(content) or 0
+                print("INFO@netInfo: ",connNum," connection(s) found")
+            elseif connNum == 0 then
+                --All line read, Repaint all!
+                connMenu:clear()
+                for i=0 , #(data.connectionInfo or {}) do
+                    if data.connectionInfo[i] then
+                        local application          = wibox.widget.textbox()
+                        application.fit = function()
+                            return 48,connMenu.item_height
+                        end
+                        application.draw = function(self,w, cr, width, height)
+                            cr:save()
+                            cr:set_source(color(connMenu.bg_alternate))
+                            cr:rectangle(height/2,0,width-height/2,height)
+                            cr:fill()
+                            cr:set_source_surface(themeutils.get_beg_arrow2({bg_color=connMenu.bg_alternate,direction="left"}),0,0)
+                            cr:paint()
+                            cr:restore()
+                            wibox.widget.textbox.draw(self,w, cr, width, height)
+                        end
+                        application:set_markup("<b>"..data.connectionInfo[i][connLookup['protocol']].." </b>")
+                        application:set_align("right")
+
+                        local icon = nil
+                        for k2,v2 in ipairs(capi.client.get()) do
+                            if v2.class:lower() == data.connectionInfo[i][connLookup['application']]:lower() or v2.name:lower():find(data.connectionInfo[i][connLookup['application']]:lower()) ~= nil then
+                                icon  = v2.icon
+                                break
+                            end
+                        end
+                        appStat[data.connectionInfo[i][connLookup['application'  ]] ] = (appStat[data.connectionInfo[i][connLookup['application' ] ] ]or 0) + 1
+                        protocolStat[data.connectionInfo[i][connLookup['protocol']] ] = (protocolStat[data.connectionInfo[i][connLookup['protocol' ]  ] ] or 0) + 1
+                        connMenu:add_item({text=(data.connectionInfo[i][connLookup['site']] or ""),icon=icon,suffix_widget=application})
+                    end
+                end
+            else
+                -- Load line into data
+                if content == nil then print ("This shouldn't happen...")
+                else
+                    --print("Line:",content)
+                    data.connectionInfo[connNum]=content:split(",")
+                end
+            end
+            
+            -- Decrease connection left number
+            connNum=connNum-1
+        end)
+
+
+
+    --AXTODO: check for ifconfig position in $PATH
     f = io.popen('/sbin/ifconfig | grep -e "inet[a-z: ]*[0-9.]*" -o |  grep -e "[0-9.]*" -o')
     local ip4Value = "<i>"..(f:read("*line") or "") .. "</i>"
     f:close()
@@ -67,43 +118,11 @@ local function update()
     end
 
     localInfo:set_text(localValue)
+
 end
 
 local function reload_conn(connMenu,data)
-    connMenu:clear()
-    for i=0 , #(data.connectionInfo or {}) do
-        if data.connectionInfo[i] then
-            local application          = wibox.widget.textbox()
-            application.fit = function()
-                return 48,connMenu.item_height
-            end
-            application.draw = function(self,w, cr, width, height)
-                cr:save()
-                cr:set_source(color(connMenu.bg_alternate))
-                cr:rectangle(height/2,0,width-height/2,height)
-                cr:fill()
-                cr:set_source_surface(themeutils.get_beg_arrow2({bg_color=connMenu.bg_alternate,direction="left"}),0,0)
-                cr:paint()
-                cr:restore()
-                wibox.widget.textbox.draw(self,w, cr, width, height)
-            end
-            application:set_markup("<b>"..data.connectionInfo[i][connLookup['protocol']].." </b>")
-            application:set_align("right")
 
-            local icon = nil
-            for k2,v2 in ipairs(capi.client.get()) do
-                if v2.class:lower() == data.connectionInfo[i][connLookup['application']]:lower() or v2.name:lower():find(data.connectionInfo[i][connLookup['application']]:lower()) ~= nil then
-                    icon  = v2.icon
-                    break
-                end
-            end
-            --             print("adding",data.connectionInfo[i]['application'  ],appStat[data.connectionInfo[i]['application'  ] ] )
-            appStat[data.connectionInfo[i][connLookup['application'  ]] ] = (appStat[data.connectionInfo[i][connLookup['application' ] ] ]or 0) + 1
-            protocolStat[data.connectionInfo[i][connLookup['protocol']] ] = (protocolStat[data.connectionInfo[i][connLookup['protocol' ]  ] ] or 0) + 1
-            --             print("now",appStat[data.connectionInfo[i]['application'  ] ])
-            connMenu:add_item({text=(data.connectionInfo[i][connLookup['site']] or ""),icon=icon,suffix_widget=application})
-        end
-    end
 end
 
 local function reload_appstat(appMenu,data)
@@ -123,7 +142,7 @@ local function reload_appstat(appMenu,data)
     end
 end
 
-local connMenu,protMenu,appMenu
+
 
 local function update2()
     reload_conn(connMenu,data)
