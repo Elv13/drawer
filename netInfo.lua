@@ -266,7 +266,7 @@ local function update()
 
     local function ip_label_fit(...)
         --     local w,h = wibox.widget.textbox(...)
-        return 42,20
+        return 60,20
     end
 
     -- This code will create a pseudo/fake average over the last 15 samples and output a value
@@ -299,8 +299,8 @@ local function update()
 
         netDownGraph.draw = down_graph_draw
         netUpGraph.draw   = up_graph_draw
-        ip4lbl:set_markup("<b>IPv4</b>")
-        ip6lbl:set_markup("<b>IPv6</b>")
+        ip4lbl:set_markup("<b>IP LAN:</b>")
+        ip6lbl:set_markup("<b>IP WAN:</b>")
         ip4lbl.fit        = ip_label_fit
         ip4lbl.draw       = ip_label_draw
         ip6lbl.fit        = ip_label_fit
