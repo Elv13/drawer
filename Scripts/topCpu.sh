@@ -33,7 +33,7 @@ for LINE in `/bin/ps -e -o pid,pcpu,args --sort -pcpu | grep -v "0.0"`;do
         COMMAND=${COMMAND:1}
     done
     if [ "$PERCENT" != "%CPU" ]; then
-       echo "$PID;$PERCENT;`echo $COMMAND | cut -f1 -d' '`"
+       echo "$PID,$PERCENT,`echo $COMMAND | cut -f1 -d' '`"
     fi
     SKIP="false"
 done
