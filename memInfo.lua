@@ -61,12 +61,12 @@ local function refreshStat()
             if content ~= nil then
                 a=content:split(",")
                 table.insert(data.process,a)
-                print("a:",a[1],a[2],a[3])
+                --print("a:",a[1],a[2],a[3])
             end
             topMenu:clear()
             for i = 0, #(data.process or {}) do
                 if data.process[i] ~= nil then
-                    print("Proc",data.process[i][1])
+                    --print("Proc",data.process[i][1])
                     local aMem = wibox.widget.textbox()
                     aMem:set_text(data.process[i][2])
                     aMem.fit = function()
