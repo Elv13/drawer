@@ -19,6 +19,7 @@ local radical      = require( "radical"               )
 local color        = require( "gears.color"           )
 local cairo        = require( "lgi"                   ).cairo
 local allinone     = require( "widgets.allinone"      )
+local fd_async     = require("utils.fd_async"         )
 
 local data     = {}
 local procMenu = nil
@@ -37,49 +38,47 @@ local function match_icon(arr,name)
 end
 
 local function reload_top(procMenu,data)
-    
+    data.process={}
+
     --Load process information
-        local pipe0 = io.popen(util.getdir("config")..'/drawer/Scripts/topCpu.sh')
-        data.process={}
-        local i=0
-        for line in pipe0:lines() do
-            data.process[i]=line:split(";")
-        i=i+1
-        end
-        pipe0:close()
-    
-    procMenu:clear()
-    if data.process then
-        local procIcon = {}
-        for k2,v2 in ipairs(capi.client.get()) do
-            if v2.icon then
-                procIcon[v2.class:lower()] = v2.icon
+    fd_async.exec.command(util.getdir("config")..'/drawer/Scripts/topCpu.sh'):connect_signal("new::line",function(content)
+
+            if content ~= nil then
+                table.insert(data.process,content:split(","))
             end
-        end
-        for i=1,#data.process do
-            local wdg = {}
-            wdg.percent       = wibox.widget.textbox()
-            wdg.percent.fit = function()
-                return 42,procMenu.item_height
+            procMenu:clear()
+            if data.process then
+                local procIcon = {}
+                for k2,v2 in ipairs(capi.client.get()) do
+                    if v2.icon then
+                        procIcon[v2.class:lower()] = v2.icon
+                    end
+                end
+                for i=1,#data.process do
+                    local wdg = {}
+                    wdg.percent       = wibox.widget.textbox()
+                    wdg.percent.fit = function()
+                        return 42,procMenu.item_height
+                    end
+                    wdg.percent.draw = function(self,w, cr, width, height)
+                        cr:save()
+                        cr:set_source(color(procMenu.bg_alternate))
+                        cr:rectangle(0,0,width-height/2,height)
+                        cr:fill()
+                        cr:set_source_surface(themeutils.get_beg_arrow2({bg_color=procMenu.bg_alternate}),width-height/2,0)
+                        cr:paint()
+                        cr:restore()
+                        wibox.widget.textbox.draw(self,w, cr, width, height)
+                    end
+                    wdg.kill          = wibox.widget.imagebox()
+                    wdg.kill:set_image(config.iconPath .. "kill.png")
+
+                    --Show process and cpu load
+                    wdg.percent:set_text((data.process[i][2] or "N/A").."%")
+                    procMenu:add_item({text=data.process[i][3],suffix_widget=wdg.kill,prefix_widget=wdg.percent})
+                end
             end
-            wdg.percent.draw = function(self,w, cr, width, height)
-                cr:save()
-                cr:set_source(color(procMenu.bg_alternate))
-                cr:rectangle(0,0,width-height/2,height)
-                cr:fill()
-                cr:set_source_surface(themeutils.get_beg_arrow2({bg_color=procMenu.bg_alternate}),width-height/2,0)
-                cr:paint()
-                cr:restore()
-                wibox.widget.textbox.draw(self,w, cr, width, height)
-            end
-            wdg.kill          = wibox.widget.imagebox()
-            wdg.kill:set_image(config.iconPath .. "kill.png")
-            
-            --Show process and cpu load
-            wdg.percent:set_text((data.process[i][2] or "N/A").."%")
-            procMenu:add_item({text=data.process[i][3],suffix_widget=wdg.kill,prefix_widget=wdg.percent})
-        end
-    end
+        end)
 end
 
 local function new(margin, args)
@@ -116,7 +115,7 @@ local function new(margin, args)
             i=i+1
         end
         pipe0:close()
-        
+
     end
 
     local function createDrawer()
@@ -136,13 +135,13 @@ local function new(margin, args)
                 h_header = {"GHz","Used","Temp","Cache","Idle"}
             })
         main_table = widgets
-        
+
         --Register cell table as vicious widgets
         for i=0, (data.coreN-1) do
             --Cpu Speed (Frequency in Ghz
             vicious.register(main_table[i+1][1], vicious.widgets.cpuinf,    function (widget, args)
-                                                                                return string.format("%.2f", args['{cpu'..i..' ghz}'])
-                                                                            end,2)
+                    return string.format("%.2f", args['{cpu'..i..' ghz}'])
+                end,2)
             --Usage
             vicious.register(main_table[i+1][2], vicious.widgets.cpu,'$'..(i+2),1)
         end
@@ -155,12 +154,12 @@ local function new(margin, args)
         cpuWidgetArrayL:set_margins(3)
         cpuWidgetArrayL:set_bottom(10)
         cpuWidgetArrayL:set_widget(tab)
-        
+
         --Load Cpu model
         local pipeIn = io.popen('cat /proc/cpuinfo | grep "model name" | cut -d ":" -f2 | head -n 1',"r")
         local cpuName = pipeIn:read("*all") or "N/A"
         pipeIn:close()
-        
+
         cpuModel:set_text(cpuName)
         cpuModel.width     = 212
 
@@ -178,12 +177,12 @@ local function new(margin, args)
         loadData()
         reload_top(procMenu,data)
     end
-    
+
     local function regenMenu()
         local imb = wibox.widget.imagebox()
         imb:set_image(beautiful.path .. "Icon/reload.png")
         imb:buttons(button({ }, 1, function (geo) refresh() end))
-        
+
         aMenu = menu({item_width=198,width=200,arrow_type=radical.base.arrow_type.CENTERED})
         aMenu:add_widget(radical.widgets.header(aMenu,"INFO")  , {height = 20  , width = 200})
         aMenu:add_widget(modelWl         , {height = 40  , width = 200})
@@ -195,9 +194,9 @@ local function new(margin, args)
         aMenu:add_embeded_menu(procMenu)
         return aMenu
     end
-    
-    
-    
+
+
+
     local function show()
         if not data.menu then
             createDrawer()
