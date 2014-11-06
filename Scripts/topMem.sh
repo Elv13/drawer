@@ -41,7 +41,7 @@ for LINE in `/bin/ps -e -o pid,pmem,args --sort -rss | grep -ve "0.[0-5] "`;do #
     MEM_MB=`printf "%.1f" $MEM_MB`
     
     if [ "$PID" != "PID" ]; then
-      echo "$PID;$PERCENT;`echo $COMMAND | cut -f1 -d' '`"
+      echo "$PID,$PERCENT,`echo $COMMAND | cut -f1 -d' '`"
     let COUNTER=$COUNTER+1
     fi
 
