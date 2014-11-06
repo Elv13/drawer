@@ -57,8 +57,8 @@ local function refreshStat()
     --Load process information
     fd_async.exec.command(util.getdir("config")..'/drawer/Scripts/topMem.sh'):connect_signal("new::line",function(content)
 
+            --Ignore null content
             if content ~= nil then
-                
                 a=content:split(",")
                 table.insert(data.process,a)
                 print("a:",a[1],a[2],a[3])
@@ -232,6 +232,11 @@ local function new(margin, args)
     vicious.register(volumewidget2, vicious.widgets.mem, '$1', 1, 'mem')
 
     volumewidget2:buttons (buttonclick)
+    
+    --Same old trick to fix first load
+    --TODO: Fix first load problem with embed widgets
+    toggle()
+    toggle()
     return volumewidget2
 end
 
