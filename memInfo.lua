@@ -123,17 +123,19 @@ local function refreshStat()
         data.state = memStat["state"]
     end
 
-    if memStat == nil or memStat["ram"] == nil then
-        statNotFound = "N/A"
+    if data.mem["MemTotal"] ~= nil and memStat[ "ram" ][ "free"  ] ~= nil then
+        memStat["ram"]["used"] = string.format("%.2fGB",(data.mem["MemTotal"] - memStat[ "ram" ][ "free"  ])/1024)
     end
-
+    if data.mem["SwapTotal"] ~= nil and  memStat[ "swap"][ "free"  ] ~= nil then
+        memStat[ "swap"][ "used"  ] = string.format("%.2fGB",(data.mem["SwapTotal"] - memStat[ "swap" ][ "free"  ])/1024)
+    end
     if tabWdg then
-        tabWdg[ tabWdgRow.RAM  ][ tabWdgCol.TOTAL ]:set_text( data.mem["MemTotal"] or "N/A")
-        tabWdg[ tabWdgRow.RAM  ][ tabWdgCol.FREE  ]:set_text( statNotFound or memStat[ "ram" ][ "free"  ])
-        tabWdg[ tabWdgRow.RAM  ][ tabWdgCol.USED  ]:set_text( statNotFound or memStat[ "ram" ][ "used"  ])
-        tabWdg[ tabWdgRow.SWAP ][ tabWdgCol.TOTAL ]:set_text( data.mem["SwapTotal"] or "N/A")
-        tabWdg[ tabWdgRow.SWAP ][ tabWdgCol.FREE  ]:set_text( statNotFound or memStat[ "swap"][ "free"  ])
-        tabWdg[ tabWdgRow.SWAP ][ tabWdgCol.USED  ]:set_text( statNotFound or memStat[ "swap"][ "used"  ])
+        tabWdg[ tabWdgRow.RAM  ][ tabWdgCol.TOTAL ]:set_text( string.format("%.2fGB",data.mem["MemTotal"]/1024) or "N/A")
+        tabWdg[ tabWdgRow.RAM  ][ tabWdgCol.FREE  ]:set_text( string.format("%.2fGB",memStat[ "ram" ][ "free"  ]/1024) or "N/A")
+        tabWdg[ tabWdgRow.RAM  ][ tabWdgCol.USED  ]:set_text( memStat["ram"]["used"] or "N/A" )
+        tabWdg[ tabWdgRow.SWAP ][ tabWdgCol.TOTAL ]:set_text( string.format("%.2fGB",data.mem["SwapTotal"]/1024) or "N/A")
+        tabWdg[ tabWdgRow.SWAP ][ tabWdgCol.FREE  ]:set_text( string.format("%.2fGB",memStat[ "swap"][ "free"  ]/1024) or "N/A")
+        tabWdg[ tabWdgRow.SWAP ][ tabWdgCol.USED  ]:set_text( memStat["swap"]["used"] or "N/A")
     end
 
 
@@ -256,9 +258,9 @@ local function new(margin, args)
     data.mem={}
     --Load Static data
     local parsed=parseProcInfoFile('cat /proc/meminfo',{"SwapTotal","MemTotal"})
-    --Convert to GB
-    data.mem["MemTotal"]=string.format("%.2fGB",tonumber(parsed["MemTotal"])/1024/1024)
-    data.mem["SwapTotal"]=string.format("%.2fGB",tonumber(parsed["SwapTotal"])/1024/1024)
+    --Convert to MB
+    data.mem["MemTotal"]=tonumber(parsed["MemTotal"])/1024
+    data.mem["SwapTotal"]=tonumber(parsed["SwapTotal"])/1024
 
     --Same old trick to fix first load
     --TODO: Fix first load problem with embed widgets
