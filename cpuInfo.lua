@@ -143,7 +143,7 @@ local function new(margin, args)
                     return string.format("%.2f", args['{cpu'..i..' ghz}'])
                 end,2)
             --Usage
-            vicious.register(main_table[i+1][2], vicious.widgets.cpu,'$'..(i+2),1)
+            vicious.register(main_table[i+1][2], vicious.widgets.cpu,'$'..(i+2).." %",1)
         end
         modelWl         = wibox.layout.fixed.horizontal()
         modelWl:add         ( cpuModel      )

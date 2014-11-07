@@ -4,6 +4,5 @@ memInfo:
 	*update button
 cpuInfo
 	*Show governor
-	*Add unit to used
 netInfo
 	*Local lookup
