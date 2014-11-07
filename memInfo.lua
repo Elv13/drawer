@@ -106,7 +106,7 @@ local function refreshStat()
         end)
     --Load memory Statistic
     local f;
-    pipe0 = io.popen(util.getdir("config")..'/drawer/Scripts/memStatistics.sh')
+    local pipe0 = io.popen(util.getdir("config")..'/drawer/Scripts/memStatistics.sh')
     if pipe0 ~= nil then
         f=loadstring(pipe0:read("*all"))
         --Load memory statistic data
@@ -211,6 +211,11 @@ local function update()
     typeMenu:set_data(data.state)
 end
 
+local function parseMemInfoFileValue(line)
+    local temp=line:split(" ")
+    return temp[2]
+end
+
 local function new(margin, args)
     local function toggle()
         if not data.menu then
@@ -232,13 +237,31 @@ local function new(margin, args)
     vicious.register(volumewidget2, vicious.widgets.mem, '$1', 1, 'mem')
 
     volumewidget2:buttons (buttonclick)
-    
+
+    --Load Static data
+    data.ram={}
+    data.swap={}
+    local pipe0 = io.popen('cat /proc/meminfo')
+    if pipe0 ~= nil then
+        for line in pipe0:lines() do
+            --Search Total memory
+            if line:match("MemFree") ~= nil then
+                data.ram.free=parseMemInfoFileValue(line)
+                print("FREEMEM:",data.ram.free)
+            end
+        end
+    else
+        print("Unable to find /proc/meminfo")
+    end
+
+
     --Same old trick to fix first load
     --TODO: Fix first load problem with embed widgets
     toggle()
     toggle()
     return volumewidget2
 end
+
 
 return setmetatable(module, { __call = function(_, ...) return new(...) end })
 -- kate: space-indent on; indent-width 2; replace-tabs on;
