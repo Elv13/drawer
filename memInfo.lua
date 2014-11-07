@@ -236,7 +236,7 @@ end
 local function new(margin, args)
     local function toggle()
         if not data.menu then
-            refreshStat()
+            --refreshStat()
             data.menu = repaint()
         else
         end
