@@ -36,7 +36,7 @@ local module = {}
 
 local data = {}
 
-local memInfo = {}
+local memInfo, memStat = {}, {}
 
 local tabWdg = nil
 local tabWdgCol = {
@@ -104,38 +104,55 @@ local function refreshStat()
             end
 
         end)
+
+    --Clear User menu
+    usrMenu:clear()
     --Load memory Statistic
-    local f;
-    local pipe0 = io.popen(util.getdir("config")..'/drawer/Scripts/memStatistics.sh')
-    if pipe0 ~= nil then
-        f=loadstring(pipe0:read("*all"))
-        --Load memory statistic data
-        f()
-    else
-        print("Unable to find memStatistics.sh")
-    end
+   data.users={} fd_async.exec.command(util.getdir("config")..'/drawer/Scripts/memUsers.sh'):connect_signal("request::completed",function(content)
+            --print("NL",content)
+            if content ~= nil then
+                local data=content:split(',')
+                for key,field in pairs(data) do
+                    --Load user data
+                    local user=field:split(' ')
+                    --print("N:",user[1],"User:",user[2])
 
-    if memStat ~= nil and memStat["users"] then
-        data.users = memStat["users"]
-    end
+                    local totalUser = 0
 
+                    local anUser = wibox.widget.textbox()
+                    anUser:set_text(user[1])
+                    totalUser = totalUser +1
+                    usrMenu:add_item({text=user[2],suffix_widget=anUser})
+                end
+            end
+        end)
+
+
+    
+    memStat["state"]={}
+    fd_async.exec.command(util.getdir("config")..'/drawer/Scripts/memStatistics.sh'):connect_signal("new::line",function(content)
+            print("CON",content)
+            if content ~= nil then
+                local data=content:split(' ')
+                memStat["state"][data[2]]=data[1]
+            end
+        end)
     if memStat ~= nil and memStat["state"] ~= nil then
         data.state = memStat["state"]
     end
-
-    if data.mem["MemTotal"] ~= nil and memStat[ "ram" ][ "free"  ] ~= nil then
-        memStat["ram"]["used"] = string.format("%.2fGB",(data.mem["MemTotal"] - memStat[ "ram" ][ "free"  ])/1024)
-    end
-    if data.mem["SwapTotal"] ~= nil and  memStat[ "swap"][ "free"  ] ~= nil then
-        memStat[ "swap"][ "used"  ] = string.format("%.2fGB",(data.mem["SwapTotal"] - memStat[ "swap" ][ "free"  ])/1024)
-    end
+    --if data.mem["MemTotal"] ~= nil and memStat[ "ram" ][ "free"  ] ~= nil then
+    --    memStat["ram"]["used"] = string.format("%.2fGB",(data.mem["MemTotal"] - memStat[ "ram" ][ "free"  ])/1024)
+    --end
+    --if data.mem["SwapTotal"] ~= nil and  memStat[ "swap"][ "free"  ] ~= nil then
+    --    memStat[ "swap"][ "used"  ] = string.format("%.2fGB",(data.mem["SwapTotal"] - memStat[ "swap" ][ "free"  ])/1024)
+    --end
     if tabWdg then
         tabWdg[ tabWdgRow.RAM  ][ tabWdgCol.TOTAL ]:set_text( string.format("%.2fGB",data.mem["MemTotal"]/1024) or "N/A")
-        tabWdg[ tabWdgRow.RAM  ][ tabWdgCol.FREE  ]:set_text( string.format("%.2fGB",memStat[ "ram" ][ "free"  ]/1024) or "N/A")
-        tabWdg[ tabWdgRow.RAM  ][ tabWdgCol.USED  ]:set_text( memStat["ram"]["used"] or "N/A" )
+        --tabWdg[ tabWdgRow.RAM  ][ tabWdgCol.FREE  ]:set_text( string.format("%.2fGB",memStat[ "ram" ][ "free"  ]/1024) or "N/A")
+        --tabWdg[ tabWdgRow.RAM  ][ tabWdgCol.USED  ]:set_text( memStat["ram"]["used"] or "N/A" )
         tabWdg[ tabWdgRow.SWAP ][ tabWdgCol.TOTAL ]:set_text( string.format("%.2fGB",data.mem["SwapTotal"]/1024) or "N/A")
-        tabWdg[ tabWdgRow.SWAP ][ tabWdgCol.FREE  ]:set_text( string.format("%.2fGB",memStat[ "swap"][ "free"  ]/1024) or "N/A")
-        tabWdg[ tabWdgRow.SWAP ][ tabWdgCol.USED  ]:set_text( memStat["swap"]["used"] or "N/A")
+        --tabWdg[ tabWdgRow.SWAP ][ tabWdgCol.FREE  ]:set_text( string.format("%.2fGB",memStat[ "swap"][ "free"  ]/1024) or "N/A")
+        --tabWdg[ tabWdgRow.SWAP ][ tabWdgCol.USED  ]:set_text( memStat["swap"]["used"] or "N/A")
     end
 
 
@@ -143,23 +160,7 @@ local function refreshStat()
 end
 
 local function reload_user(usrMenu,data)
-    local totalUser = 0
-    local sorted = {}
-    for v, i in pairs(data.users or {}) do
-        local tmp = tonumber(i)*10
-        while sorted[tmp] do
-            tmp = tmp + 1
-        end
-        sorted[tmp] = {value=v,key=i}
-    end
-    for i2, v2 in pairs(sorted) do
-        local v,i= v2.value,v2.key
-        local anUser = wibox.widget.textbox()
-        anUser:set_text(i)
-        totalUser = totalUser +1
-        usrMenu:add_item({text=v,suffix_widget=anUser})
-    end
-    return totalUser
+
 end
 
 local function reload_top(topMenu,data)
@@ -208,8 +209,6 @@ local function repaint()
 end
 
 local function update()
-    usrMenu:clear()
-    reload_user(usrMenu,data)
     typeMenu:set_data(data.state)
 end
 
