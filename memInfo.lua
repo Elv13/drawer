@@ -128,10 +128,10 @@ local function refreshStat()
     end
 
     if tabWdg then
-        tabWdg[ tabWdgRow.RAM  ][ tabWdgCol.TOTAL ]:set_text( statNotFound or memStat[ "ram" ][ "total" ])
+        tabWdg[ tabWdgRow.RAM  ][ tabWdgCol.TOTAL ]:set_text( data.mem["MemTotal"] or "N/A")
         tabWdg[ tabWdgRow.RAM  ][ tabWdgCol.FREE  ]:set_text( statNotFound or memStat[ "ram" ][ "free"  ])
         tabWdg[ tabWdgRow.RAM  ][ tabWdgCol.USED  ]:set_text( statNotFound or memStat[ "ram" ][ "used"  ])
-        tabWdg[ tabWdgRow.SWAP ][ tabWdgCol.TOTAL ]:set_text( statNotFound or memStat[ "swap"][ "total" ])
+        tabWdg[ tabWdgRow.SWAP ][ tabWdgCol.TOTAL ]:set_text( data.mem["SwapTotal"] or "N/A")
         tabWdg[ tabWdgRow.SWAP ][ tabWdgCol.FREE  ]:set_text( statNotFound or memStat[ "swap"][ "free"  ])
         tabWdg[ tabWdgRow.SWAP ][ tabWdgCol.USED  ]:set_text( statNotFound or memStat[ "swap"][ "used"  ])
     end
@@ -211,9 +211,24 @@ local function update()
     typeMenu:set_data(data.state)
 end
 
-local function parseMemInfoFileValue(line)
-    local temp=line:split(" ")
-    return temp[2]
+local function parseProcInfoFile(file,selectedValues)
+    local foundTable={},temp
+    local pipe0 = io.popen(file)
+    if pipe0 ~= nil then
+        for line in pipe0:lines() do
+            for i,key in pairs(selectedValues) do
+                if line:match(key) ~= nil then
+                    temp=line:split(" ")
+                    foundTable[key]=temp[2]
+                    print(key,"=",foundTable[key])
+                end
+            end
+        end
+    else
+        print("Unable to find ",file)
+    end
+
+    return foundTable
 end
 
 local function new(margin, args)
@@ -238,22 +253,12 @@ local function new(margin, args)
 
     volumewidget2:buttons (buttonclick)
 
+    data.mem={}
     --Load Static data
-    data.ram={}
-    data.swap={}
-    local pipe0 = io.popen('cat /proc/meminfo')
-    if pipe0 ~= nil then
-        for line in pipe0:lines() do
-            --Search Total memory
-            if line:match("MemFree") ~= nil then
-                data.ram.free=parseMemInfoFileValue(line)
-                print("FREEMEM:",data.ram.free)
-            end
-        end
-    else
-        print("Unable to find /proc/meminfo")
-    end
-
+    local parsed=parseProcInfoFile('cat /proc/meminfo',{"SwapTotal","MemTotal"})
+    --Convert to GB
+    data.mem["MemTotal"]=string.format("%.2fGB",tonumber(parsed["MemTotal"])/1024/1024)
+    data.mem["SwapTotal"]=string.format("%.2fGB",tonumber(parsed["SwapTotal"])/1024/1024)
 
     --Same old trick to fix first load
     --TODO: Fix first load problem with embed widgets

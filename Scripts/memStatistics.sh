@@ -30,12 +30,10 @@ USED_SWAP=`expr $TOTAL_SWAP - $FREE_SWAP `
 
 echo "memStat = {}"
 echo "memStat[\"ram\"] = {}"
-echo "memStat[\"ram\"][\"total\"] = \"$TOTAL_RAM Mb\""
 echo "memStat[\"ram\"][\"free\"] = \"$FREE_RAM Mb\""
 echo "memStat[\"ram\"][\"used\"] = \"$USED_RAM Mb\""
 echo
 echo "memStat[\"swap\"] = {}"
-echo "memStat[\"swap\"][\"total\"] = \"$TOTAL_SWAP Mb\""
 echo "memStat[\"swap\"][\"free\"] = \"$FREE_SWAP Mb\""
 echo "memStat[\"swap\"][\"used\"] = \"$USED_SWAP Mb\""
 
