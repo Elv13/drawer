@@ -215,10 +215,9 @@ local function new(margin, args)
     volumewidget2:buttons (util.table.join( button({ }, 1, function (geo) show(); data.menu.parent_geometry = geo end)))
 
 
-    --Set timer for update
-    --local cpuTimer = capi.timer({ timeout = 1000 })
-    --cpuTimer:connect_signal("timeout", updateTable)
-    --cpuTimer:start()
+    --Initial menu loading quick fix
+    show()
+    show()
 
     return volumewidget2
 end
