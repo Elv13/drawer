@@ -3,6 +3,7 @@ memInfo:
 	*Async user load
 	*update button
 cpuInfo
-	*Show governor
+	*Governor edit menu
+	*Extended governor Name
 netInfo
 	*Local lookup

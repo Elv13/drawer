@@ -132,7 +132,7 @@ local function new(margin, args)
         end
         local tab,widgets = radtab(emptyTable,
             {row_height=20,v_header = tabHeader,
-                h_header = {"GHz","Used","Temp","Cache","Idle"}
+                h_header = {"GHz","Used","Temp","Cache","Governor"}
             })
         main_table = widgets
 
@@ -143,7 +143,9 @@ local function new(margin, args)
                     return string.format("%.2f", args['{cpu'..i..' ghz}'])
                 end,2)
             --Usage
-            vicious.register(main_table[i+1][2], vicious.widgets.cpu,'$'..(i+2).." %",1)
+            vicious.register(main_table[i+1][2], vicious.widgets.cpu,'$'..(i+2)..' %',1)
+            --Governor
+            vicious.register(main_table[i+1][5], vicious.widgets.cpufreq,'$5',5,"cpu"..i)
         end
         modelWl         = wibox.layout.fixed.horizontal()
         modelWl:add         ( cpuModel      )
