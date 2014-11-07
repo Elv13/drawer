@@ -108,7 +108,7 @@ local function refreshStat()
     --Clear User menu
     usrMenu:clear()
     --Load memory Statistic
-   data.users={} fd_async.exec.command(util.getdir("config")..'/drawer/Scripts/memUsers.sh'):connect_signal("request::completed",function(content)
+    data.users={} fd_async.exec.command(util.getdir("config")..'/drawer/Scripts/memUsers.sh'):connect_signal("request::completed",function(content)
             --print("NL",content)
             if content ~= nil then
                 local data=content:split(',')
@@ -128,18 +128,21 @@ local function refreshStat()
         end)
 
 
-    
+
     memStat["state"]={}
-    fd_async.exec.command(util.getdir("config")..'/drawer/Scripts/memStatistics.sh'):connect_signal("new::line",function(content)
+    fd_async.exec.command(util.getdir("config")..'/drawer/Scripts/memStatistics.sh'):connect_signal("request::completed",function(content)
             print("CON",content)
             if content ~= nil then
-                local data=content:split(' ')
-                memStat["state"][data[2]]=data[1]
+                local data=content:split(',')
+                for key,field in pairs(data) do
+                    local temp=content:split(' ')
+                    memStat["state"][temp[2]]=temp[1]
+                end
+            end
+            if memStat ~= nil then
+                typeMenu:set_data(memStat["state"])
             end
         end)
-    if memStat ~= nil and memStat["state"] ~= nil then
-        data.state = memStat["state"]
-    end
     --if data.mem["MemTotal"] ~= nil and memStat[ "ram" ][ "free"  ] ~= nil then
     --    memStat["ram"]["used"] = string.format("%.2fGB",(data.mem["MemTotal"] - memStat[ "ram" ][ "free"  ])/1024)
     --end
@@ -189,7 +192,6 @@ local function repaint()
     local memStat
 
     usrMenu = embed({max_items=5})
-    reload_user(usrMenu,data)
     mainMenu:add_embeded_menu(usrMenu)
 
     mainMenu:add_widget(radical.widgets.header(mainMenu,"STATE"),{height = 20 , width = 200})
@@ -209,7 +211,7 @@ local function repaint()
 end
 
 local function update()
-    typeMenu:set_data(data.state)
+
 end
 
 local function parseProcInfoFile(file,selectedValues)
@@ -235,7 +237,6 @@ end
 local function new(margin, args)
     local function toggle()
         if not data.menu then
-            --refreshStat()
             data.menu = repaint()
         else
         end

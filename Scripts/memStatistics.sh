@@ -18,4 +18,5 @@ function replace_acronym() {
 
 
 
-ps ax -eo user,stat | awk '{print $2 }'|cut -c1| awk '{arr[$1]++ } END{for(i in arr) {print arr[i],i}}'
+A=`ps ax -eo user,stat | awk '{print $2 }'|cut -c1| awk '{arr[$1]++ } END{for(i in arr) {print arr[i],i,","}}'`
+echo $A
