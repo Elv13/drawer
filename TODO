@@ -1,0 +1,9 @@
+memInfo:
+	*Sort user by use
+	*Async user load
+	*update button
+cpuInfo
+	*Show governor
+	*Add unit to used
+netInfo
+	*Local lookup
