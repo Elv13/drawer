@@ -16,7 +16,11 @@ function replace_acronym() {
    fi
 }
 
-
-echo "u,`ps ax -eo user,stat | awk '{arr[$1]++} END{for(i in arr) {print arr[i],i}}' | sort -nr | tr "\n" ","`"
+#Users
+echo "u;`ps ax -eo user,stat | awk '{arr[$1]++} END{for(i in arr) {print arr[i],i}}' | sort -nr | tr "\n" ","`"
+#pie
 A=`ps ax -eo user,stat | awk '{print $2 }'|cut -c1| awk '{arr[$1]++ } END{for(i in arr) {print arr[i],i,","}}'`
-echo p,$A
+echo 'p;'$A
+#top
+/bin/ps -e -o pid,pmem,args --sort -rss | awk '$2>0.5 {print "t;" $1 ","$2","$3}'
+echo 't;'

@@ -54,81 +54,106 @@ local usrMenu,typeMenu,topMenu
 
 local function refreshStat()
     data.process={}
-    --Load process information
-    fd_async.exec.command(util.getdir("config")..'/drawer/Scripts/topMem.sh'):connect_signal("new::line",function(content)
+    local memState={}
+    --Load all info 
+    fd_async.exec.command(util.getdir("config")..'/drawer/Scripts/memStatistics.sh'):connect_signal("new::line",function(content)
+            --Ignore nil content
+            if content == nil then return end
 
-            --Ignore null content
-            if content ~= nil then
-                a=content:split(",")
-                table.insert(data.process,a)
-                --print("a:",a[1],a[2],a[3])
-            end
-            topMenu:clear()
-            for i = 0, #(data.process or {}) do
-                if data.process[i] ~= nil then
-                    --print("Proc",data.process[i][1])
-                    local aMem = wibox.widget.textbox()
-                    aMem:set_text(data.process[i][2])
-                    aMem.fit = function()
-                        return 58,topMenu.item_height
-                    end
+            --Check header
+            local packet = content:split(";")
+            --Check for header
+            if packet[1] == 't' then
+                --top line
+                --print("--top line",packet[2])
+                --Check for empty packet line
+                if packet[2] ~= nil then
+                    --Insert process
+                    table.insert(data.process,content:split(","))
+                else
+                    --print("Repaint")
+                    --Repaint
+                    topMenu:clear()
+                    for i = 0, #(data.process or {}) do
+                        if data.process[i] ~= nil then
+                            local aMem = wibox.widget.textbox()
+                            aMem:set_text(data.process[i][2])
+                            aMem.fit = function()
+                                return 58,topMenu.item_height
+                            end
 
-                    for k2,v2 in ipairs(capi.client.get()) do
-                        if v2.class:lower() == data.process[i][3]:lower() or v2.name:lower():find(data.process[i][3]:lower()) ~= nil then
-                            aMem.bg_image = v2.icon
-                            break
+                            for k2,v2 in ipairs(capi.client.get()) do
+                                if v2.class:lower() == data.process[i][3]:lower() or v2.name:lower():find(data.process[i][3]:lower()) ~= nil then
+                                    aMem.bg_image = v2.icon
+                                    break
+                                end
+                            end
+
+                            aMem.draw = function(self,w, cr, width, height)
+                                cr:save()
+                                cr:set_source(color(topMenu.bg_alternate))
+                                cr:rectangle(0,0,width-height/2,height)
+                                cr:fill()
+                                --                 if aMem.bg_image then
+                                --                     cr:set_source(aMem.bg_image)
+                                --                     cr:paint()
+                                --                 end
+
+                                cr:set_source_surface(themeutils.get_beg_arrow2({bg_color=topMenu.bg_alternate}),width-height/2,0)
+                                cr:paint()
+                                cr:restore()
+                                wibox.widget.textbox.draw(self,w, cr, width, height)
+                            end
+
+                            testImage2       = wibox.widget.imagebox()
+                            testImage2:set_image(config.iconPath .. "kill.png")
+
+                            topMenu:add_item({text=data.process[i][3] or "N/A",prefix_widget=aMem,suffix_widget=testImage2})
                         end
                     end
+                end
 
-                    aMem.draw = function(self,w, cr, width, height)
-                        cr:save()
-                        cr:set_source(color(topMenu.bg_alternate))
-                        cr:rectangle(0,0,width-height/2,height)
-                        cr:fill()
-                        --                 if aMem.bg_image then
-                        --                     cr:set_source(aMem.bg_image)
-                        --                     cr:paint()
-                        --                 end
 
-                        cr:set_source_surface(themeutils.get_beg_arrow2({bg_color=topMenu.bg_alternate}),width-height/2,0)
-                        cr:paint()
-                        cr:restore()
-                        wibox.widget.textbox.draw(self,w, cr, width, height)
+
+            elseif packet[1] == 'u' then
+               -- print("--user line",packet[2])
+                --Clear User menu
+                usrMenu:clear()
+                --Reload User list
+                if packet[2] ~= nil then
+                    local data=packet[2]:split(',')
+                    for key,field in pairs(data) do
+                        --Load user data
+                        local user=field:split(' ')
+                        --print("N:",user[1],"User:",user[2])
+
+                        local totalUser = 0
+
+                        local anUser = wibox.widget.textbox()
+                        anUser:set_text(user[1])
+                        totalUser = totalUser +1
+                        usrMenu:add_item({text=user[2],suffix_widget=anUser})
                     end
-
-                    testImage2       = wibox.widget.imagebox()
-                    testImage2:set_image(config.iconPath .. "kill.png")
-
-                    topMenu:add_item({text=data.process[i][3] or "N/A",prefix_widget=aMem,suffix_widget=testImage2})
                 end
-            end
-
-        end)
-
-    --Clear User menu
-    usrMenu:clear()
-    --Load memory Statistic
-    data.users={} fd_async.exec.command(util.getdir("config")..'/drawer/Scripts/memUsers.sh'):connect_signal("request::completed",function(content)
-            --print("NL",content)
-            if content ~= nil then
-                local data=content:split(',')
-                for key,field in pairs(data) do
-                    --Load user data
-                    local user=field:split(' ')
-                    --print("N:",user[1],"User:",user[2])
-
-                    local totalUser = 0
-
-                    local anUser = wibox.widget.textbox()
-                    anUser:set_text(user[1])
-                    totalUser = totalUser +1
-                    usrMenu:add_item({text=user[2],suffix_widget=anUser})
+            elseif packet[1] == 'p' then
+                print("--process line",packet[2])
+                if packet[2] ~= nil then
+                    local data=packet[2]:split(',')
+                    for key,field in pairs(data) do
+                        local temp=field:split(' ')
+                        memState[temp[2]]=temp[1]
+                        print("PL:",temp[2],":",temp[1])
+                    end
+                    if memStat ~= nil then
+                        typeMenu:set_data(memState)
+                    end
                 end
+            else
+                print("INFO: Unknown line",packet[2])
             end
         end)
-
-
-
+end
+local function idle()
     memStat["state"]={}
     fd_async.exec.command(util.getdir("config")..'/drawer/Scripts/memStatistics.sh'):connect_signal("request::completed",function(content)
             print("CON",content)
