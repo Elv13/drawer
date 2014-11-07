@@ -56,7 +56,9 @@ local function update()
                 for i=0 , #(data.connectionInfo or {}) do
                     if data.connectionInfo[i] then
                         -- Reset application connection count
-                        appStat[data.connectionInfo[i][connLookup['application'  ]] ] = 0
+                        if data.connectionInfo[i][connLookup['application']] ~= nil then
+                        appStat[data.connectionInfo[i][connLookup['application']] ] = 0
+                        end
 
                         local application          = wibox.widget.textbox()
                         application.fit = function()
