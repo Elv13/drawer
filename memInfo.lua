@@ -69,7 +69,7 @@ local function refreshStat()
                 --Check for empty packet line
                 if packet[2] ~= nil then
                     --Insert process
-                    table.insert(data.process,content:split(","))
+                    table.insert(data.process,packet[2]:split(","))
                 else
                     --print("Repaint")
                     --Repaint
@@ -77,13 +77,13 @@ local function refreshStat()
                     for i = 0, #(data.process or {}) do
                         if data.process[i] ~= nil then
                             local aMem = wibox.widget.textbox()
-                            aMem:set_text(data.process[i][2])
+                            aMem:set_text(data.process[i][1].." %")
                             aMem.fit = function()
                                 return 58,topMenu.item_height
                             end
 
                             for k2,v2 in ipairs(capi.client.get()) do
-                                if v2.class:lower() == data.process[i][3]:lower() or v2.name:lower():find(data.process[i][3]:lower()) ~= nil then
+                                if v2.class:lower() == data.process[i][2]:lower() or v2.name:lower():find(data.process[i][2]:lower()) ~= nil then
                                     aMem.bg_image = v2.icon
                                     break
                                 end
@@ -108,7 +108,7 @@ local function refreshStat()
                             testImage2       = wibox.widget.imagebox()
                             testImage2:set_image(config.iconPath .. "kill.png")
 
-                            topMenu:add_item({text=data.process[i][3] or "N/A",prefix_widget=aMem,suffix_widget=testImage2})
+                            topMenu:add_item({text=data.process[i][2] or "N/A",prefix_widget=aMem,suffix_widget=testImage2})
                         end
                     end
                 end
