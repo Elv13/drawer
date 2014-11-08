@@ -16,6 +16,9 @@ function replace_acronym() {
    fi
 }
 
+#Statistic
+A=`awk '$1~/Mem[(Total)(Free)]/{print $2/1024 ","} $1~/Swap[(Total)(Free)]/{print $2/1024 ","}' /proc/meminfo`
+echo 's;'$A
 #Users
 echo "u;`ps ax -eo user,stat | awk '{arr[$1]++} END{for(i in arr) {print arr[i],i}}' | sort -nr | tr "\n" ","`"
 #pie
@@ -24,3 +27,5 @@ echo 'p;'$A
 #top
 /bin/ps -e -o pid,pmem,args --sort -rss | awk '$2>0.5 {print "t;" $1 ","$2","$3}'
 echo 't;'
+
+

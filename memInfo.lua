@@ -148,19 +148,24 @@ local function refreshStat()
                         typeMenu:set_data(memState)
                     end
                 end
+            elseif packet[1] == 's' then
+                if packet[2] ~= nil then
+                    local memData=packet[2]:split(',')
+                    if tabWdg then
+                        tabWdg[ tabWdgRow.RAM  ][ tabWdgCol.TOTAL ]:set_text( string.format("%.2fGB",memData[1]/1024) or "N/A")
+                        tabWdg[ tabWdgRow.RAM  ][ tabWdgCol.FREE  ]:set_text( string.format("%.2fGB",memData[2]/1024) or "N/A")
+                        tabWdg[ tabWdgRow.RAM  ][ tabWdgCol.USED  ]:set_text((string.format("%.1f",memData[2]/memData[1]*100) or "N/A") .. " %" )
+                        tabWdg[ tabWdgRow.SWAP ][ tabWdgCol.TOTAL ]:set_text( string.format("%.2fGB",memData[3]/1024) or "N/A")
+                        tabWdg[ tabWdgRow.SWAP ][ tabWdgCol.FREE  ]:set_text( string.format("%.2fGB",memData[4]/1024) or "N/A")
+                        tabWdg[ tabWdgRow.SWAP ][ tabWdgCol.USED  ]:set_text((string.format("%.1f",memData[4]/memData[3]*100) or "N/A") .. " %" )
+                    end
+                end
             else
                 print("INFO: Unknown line",packet[2])
             end
         end)
     
-    if tabWdg then
-        tabWdg[ tabWdgRow.RAM  ][ tabWdgCol.TOTAL ]:set_text( string.format("%.2fGB",data.mem["MemTotal"]/1024) or "N/A")
-        --tabWdg[ tabWdgRow.RAM  ][ tabWdgCol.FREE  ]:set_text( string.format("%.2fGB",memStat[ "ram" ][ "free"  ]/1024) or "N/A")
-        --tabWdg[ tabWdgRow.RAM  ][ tabWdgCol.USED  ]:set_text( memStat["ram"]["used"] or "N/A" )
-        tabWdg[ tabWdgRow.SWAP ][ tabWdgCol.TOTAL ]:set_text( string.format("%.2fGB",data.mem["SwapTotal"]/1024) or "N/A")
-        --tabWdg[ tabWdgRow.SWAP ][ tabWdgCol.FREE  ]:set_text( string.format("%.2fGB",memStat[ "swap"][ "free"  ]/1024) or "N/A")
-        --tabWdg[ tabWdgRow.SWAP ][ tabWdgCol.USED  ]:set_text( memStat["swap"]["used"] or "N/A")
-    end
+    
 end
 
 local function repaint()
@@ -205,25 +210,7 @@ local function update()
 
 end
 
-local function parseProcInfoFile(file,selectedValues)
-    local foundTable={},temp
-    local pipe0 = io.popen(file)
-    if pipe0 ~= nil then
-        for line in pipe0:lines() do
-            for i,key in pairs(selectedValues) do
-                if line:match(key) ~= nil then
-                    temp=line:split(" ")
-                    foundTable[key]=temp[2]
-                    print(key,"=",foundTable[key])
-                end
-            end
-        end
-    else
-        print("Unable to find ",file)
-    end
 
-    return foundTable
-end
 
 local function new(margin, args)
     local function toggle()
@@ -247,12 +234,7 @@ local function new(margin, args)
     volumewidget2:buttons (buttonclick)
 
     data.mem={}
-    --Load Static data
-    local parsed=parseProcInfoFile('cat /proc/meminfo',{"SwapTotal","MemTotal"})
-    --Convert to MB
-    data.mem["MemTotal"]=tonumber(parsed["MemTotal"])/1024
-    data.mem["SwapTotal"]=tonumber(parsed["SwapTotal"])/1024
-
+    
     --Same old trick to fix first load
     --TODO: Fix first load problem with embed widgets
     toggle()
