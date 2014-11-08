@@ -34,9 +34,10 @@ local capi = { image  = image  ,
 
 local module = {}
 
-local data = {}
+local dataMenu = nil
 
-local memInfo, memStat = {}, {}
+local process = {}
+local memState = {}
 
 local tabWdg = nil
 local tabWdgCol = {
@@ -53,8 +54,8 @@ local tabWdgRow = {
 local usrMenu,typeMenu,topMenu
 
 local function refreshStat()
-    data.process={}
-    local memState={}
+    process={}
+    memState={}
     --Load all info 
     fd_async.exec.command(util.getdir("config")..'/drawer/Scripts/memStatistics.sh'):connect_signal("new::line",function(content)
             --Ignore nil content
@@ -69,21 +70,21 @@ local function refreshStat()
                 --Check for empty packet line
                 if packet[2] ~= nil then
                     --Insert process
-                    table.insert(data.process,packet[2]:split(","))
+                    table.insert(process,packet[2]:split(","))
                 else
                     --print("Repaint")
                     --Repaint
                     topMenu:clear()
-                    for i = 0, #(data.process or {}) do
-                        if data.process[i] ~= nil then
+                    for i = 0, #(process or {}) do
+                        if process[i] ~= nil then
                             local aMem = wibox.widget.textbox()
-                            aMem:set_text(data.process[i][1].." %")
+                            aMem:set_text(process[i][1].." %")
                             aMem.fit = function()
                                 return 58,topMenu.item_height
                             end
 
                             for k2,v2 in ipairs(capi.client.get()) do
-                                if v2.class:lower() == data.process[i][2]:lower() or v2.name:lower():find(data.process[i][2]:lower()) ~= nil then
+                                if v2.class:lower() == process[i][2]:lower() or v2.name:lower():find(process[i][2]:lower()) ~= nil then
                                     aMem.bg_image = v2.icon
                                     break
                                 end
@@ -108,7 +109,7 @@ local function refreshStat()
                             testImage2       = wibox.widget.imagebox()
                             testImage2:set_image(config.iconPath .. "kill.png")
 
-                            topMenu:add_item({text=data.process[i][2] or "N/A",prefix_widget=aMem,suffix_widget=testImage2})
+                            topMenu:add_item({text=process[i][2] or "N/A",prefix_widget=aMem,suffix_widget=testImage2})
                         end
                     end
                 end
@@ -116,7 +117,7 @@ local function refreshStat()
 
 
             elseif packet[1] == 'u' then
-               -- print("--user line",packet[2])
+                -- print("--user line",packet[2])
                 --Clear User menu
                 usrMenu:clear()
                 --Reload User list
@@ -142,13 +143,14 @@ local function refreshStat()
                     for key,field in pairs(data) do
                         local temp=field:split(' ')
                         memState[temp[2]]=temp[1]
-                        print("PL:",temp[2],":",temp[1])
+                        --print("PL:",temp[2],":",temp[1])
                     end
-                    if memStat ~= nil then
+                    if memState ~= nil then
                         typeMenu:set_data(memState)
                     end
                 end
             elseif packet[1] == 's' then
+                --Statistic line
                 if packet[2] ~= nil then
                     local memData=packet[2]:split(',')
                     if tabWdg then
@@ -161,11 +163,11 @@ local function refreshStat()
                     end
                 end
             else
-                print("INFO: Unknown line",packet[2])
+                print("INFO@memInfo: Unknown line",packet[2])
             end
         end)
-    
-    
+
+
 end
 
 local function repaint()
@@ -194,7 +196,6 @@ local function repaint()
 
     typeMenu = radical.widgets.piechart()
     mainMenu:add_widget(typeMenu,{height = 100 , width = 100})
-    typeMenu:set_data(data.state)
 
     local imb = wibox.widget.imagebox()
     imb:set_image(beautiful.path .. "Icon/reload.png")
@@ -206,26 +207,20 @@ local function repaint()
     return mainMenu
 end
 
-local function update()
-
-end
-
-
 
 local function new(margin, args)
     local function toggle()
-        if not data.menu then
-            data.menu = repaint()
+        if not dataMenu then
+            dataMenu = repaint()
         else
         end
-        if not data.menu.visible then
+        if not dataMenu.visible then
             refreshStat()
-            update()
         end
-        data.menu.visible = not data.menu.visible
+        dataMenu.visible = not dataMenu.visible
     end
 
-    local buttonclick = util.table.join(button({ }, 1, function (geo) toggle();data.menu.parent_geometry=geo end))
+    local buttonclick = util.table.join(button({ }, 1, function (geo) toggle();dataMenu.parent_geometry=geo end))
 
     local volumewidget2 = allinone()
     volumewidget2:set_icon(config.iconPath .. "cpu.png")
@@ -233,8 +228,6 @@ local function new(margin, args)
 
     volumewidget2:buttons (buttonclick)
 
-    data.mem={}
-    
     --Same old trick to fix first load
     --TODO: Fix first load problem with embed widgets
     toggle()
