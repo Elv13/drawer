@@ -136,7 +136,7 @@ local function refreshStat()
                     end
                 end
             elseif packet[1] == 'p' then
-                print("--process line",packet[2])
+                --print("--process line",packet[2])
                 if packet[2] ~= nil then
                     local data=packet[2]:split(',')
                     for key,field in pairs(data) do
@@ -152,28 +152,7 @@ local function refreshStat()
                 print("INFO: Unknown line",packet[2])
             end
         end)
-end
-local function idle()
-    memStat["state"]={}
-    fd_async.exec.command(util.getdir("config")..'/drawer/Scripts/memStatistics.sh'):connect_signal("request::completed",function(content)
-            print("CON",content)
-            if content ~= nil then
-                local data=content:split(',')
-                for key,field in pairs(data) do
-                    local temp=content:split(' ')
-                    memStat["state"][temp[2]]=temp[1]
-                end
-            end
-            if memStat ~= nil then
-                typeMenu:set_data(memStat["state"])
-            end
-        end)
-    --if data.mem["MemTotal"] ~= nil and memStat[ "ram" ][ "free"  ] ~= nil then
-    --    memStat["ram"]["used"] = string.format("%.2fGB",(data.mem["MemTotal"] - memStat[ "ram" ][ "free"  ])/1024)
-    --end
-    --if data.mem["SwapTotal"] ~= nil and  memStat[ "swap"][ "free"  ] ~= nil then
-    --    memStat[ "swap"][ "used"  ] = string.format("%.2fGB",(data.mem["SwapTotal"] - memStat[ "swap" ][ "free"  ])/1024)
-    --end
+    
     if tabWdg then
         tabWdg[ tabWdgRow.RAM  ][ tabWdgCol.TOTAL ]:set_text( string.format("%.2fGB",data.mem["MemTotal"]/1024) or "N/A")
         --tabWdg[ tabWdgRow.RAM  ][ tabWdgCol.FREE  ]:set_text( string.format("%.2fGB",memStat[ "ram" ][ "free"  ]/1024) or "N/A")
@@ -182,20 +161,7 @@ local function idle()
         --tabWdg[ tabWdgRow.SWAP ][ tabWdgCol.FREE  ]:set_text( string.format("%.2fGB",memStat[ "swap"][ "free"  ]/1024) or "N/A")
         --tabWdg[ tabWdgRow.SWAP ][ tabWdgCol.USED  ]:set_text( memStat["swap"]["used"] or "N/A")
     end
-
-
-
 end
-
-local function reload_user(usrMenu,data)
-
-end
-
-local function reload_top(topMenu,data)
-
-end
-
-
 
 local function repaint()
     mainMenu = menu({arrow_x=90,nokeyboardnav=true,item_width=198,width=200,arrow_type=radical.base.arrow_type.CENTERED})
