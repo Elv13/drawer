@@ -129,12 +129,12 @@ local function new(margin, args)
         local emptyTable={};
         local tabHeader={};
         for i=1,data.coreN,1 do
-            emptyTable[i]= {"","","","",""}
+            emptyTable[i]= {"","","",""}
             tabHeader[i]="C"..(i-1)
         end
         local tab,widgets = radtab(emptyTable,
             {row_height=20,v_header = tabHeader,
-                h_header = {"GHz","Used","Temp","Cache","Governor"}
+                h_header = {"GHz","Used","Temp","Governor"}
             })
         main_table = widgets
 
@@ -147,7 +147,7 @@ local function new(margin, args)
             --Usage
             vicious.register(main_table[i+1][2], vicious.widgets.cpu,'$'..(i+2)..' %',1)
             --Governor
-            vicious.register(main_table[i+1][5], vicious.widgets.cpufreq,'$5',5,"cpu"..i)
+            vicious.register(main_table[i+1][4], vicious.widgets.cpufreq,'$5',5,"cpu"..i)
         end
         modelWl         = wibox.layout.fixed.horizontal()
         modelWl:add         ( cpuModel      )
