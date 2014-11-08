@@ -156,10 +156,10 @@ local function refreshStat()
                     if tabWdg then
                         tabWdg[ tabWdgRow.RAM  ][ tabWdgCol.TOTAL ]:set_text( string.format("%.2fGB",memData[1]/1024) or "N/A")
                         tabWdg[ tabWdgRow.RAM  ][ tabWdgCol.FREE  ]:set_text( string.format("%.2fGB",memData[2]/1024) or "N/A")
-                        tabWdg[ tabWdgRow.RAM  ][ tabWdgCol.USED  ]:set_text((string.format("%.1f",memData[2]/memData[1]*100) or "N/A") .. " %" )
+                        tabWdg[ tabWdgRow.RAM  ][ tabWdgCol.USED  ]:set_text((string.format("%.1f",100-memData[2]/memData[1]*100) or "N/A") .. " %" )
                         tabWdg[ tabWdgRow.SWAP ][ tabWdgCol.TOTAL ]:set_text( string.format("%.2fGB",memData[3]/1024) or "N/A")
                         tabWdg[ tabWdgRow.SWAP ][ tabWdgCol.FREE  ]:set_text( string.format("%.2fGB",memData[4]/1024) or "N/A")
-                        tabWdg[ tabWdgRow.SWAP ][ tabWdgCol.USED  ]:set_text((string.format("%.1f",memData[4]/memData[3]*100) or "N/A") .. " %" )
+                        tabWdg[ tabWdgRow.SWAP ][ tabWdgCol.USED  ]:set_text((string.format("%.1f",100-memData[4]/memData[3]*100) or "N/A") .. " %" )
                     end
                 end
             else
@@ -171,8 +171,13 @@ local function refreshStat()
 end
 
 local function repaint()
+    
+    local imb = wibox.widget.imagebox()
+    imb:set_image(beautiful.path .. "Icon/reload.png")
+    imb:buttons(button({ }, 1, function (geo) refreshStat() end))
+    
     mainMenu = menu({arrow_x=90,nokeyboardnav=true,item_width=198,width=200,arrow_type=radical.base.arrow_type.CENTERED})
-    mainMenu:add_widget(radical.widgets.header(mainMenu,"USAGE"),{height = 20 , width = 200})
+    mainMenu:add_widget(radical.widgets.header(mainMenu,"USAGE",{suffix_widget=imb}),{height = 20 , width = 200})
 
     local m3 = wibox.layout.margin()
     m3:set_margins(3)
@@ -186,19 +191,18 @@ local function repaint()
     tabWdg = wdgs
     m3:set_widget(tab)
     mainMenu:add_widget(m3,{width = 200})
-    mainMenu:add_widget(radical.widgets.header(mainMenu,"USERS"),{height = 20, width = 200})
+    mainMenu:add_widget(radical.widgets.header(mainMenu,"USERS",{suffix_widget=imb}),{height = 20, width = 200})
     local memStat
 
     usrMenu = embed({max_items=5})
     mainMenu:add_embeded_menu(usrMenu)
 
-    mainMenu:add_widget(radical.widgets.header(mainMenu,"STATE"),{height = 20 , width = 200})
+    mainMenu:add_widget(radical.widgets.header(mainMenu,"STATE",{suffix_widget=imb}),{height = 20 , width = 200})
 
     typeMenu = radical.widgets.piechart()
     mainMenu:add_widget(typeMenu,{height = 100 , width = 100})
 
-    local imb = wibox.widget.imagebox()
-    imb:set_image(beautiful.path .. "Icon/reload.png")
+    
     mainMenu:add_widget(radical.widgets.header(mainMenu,"PROCESS",{suffix_widget=imb}),{height = 20 , width = 200})
 
     topMenu = embed({max_items=3})
