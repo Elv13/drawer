@@ -156,11 +156,11 @@ local function refreshStat()
                 if packet[2] ~= nil then
                     local memData=packet[2]:split(',')
                     if tabWdg then
-                        tabWdg[ tabWdgRow.RAM  ][ tabWdgCol.TOTAL ]:set_text( string.format("%.2fGB",memData[1]/1024) or "N/A")
-                        tabWdg[ tabWdgRow.RAM  ][ tabWdgCol.FREE  ]:set_text( string.format("%.2fGB",memData[2]/1024) or "N/A")
+                        tabWdg[ tabWdgRow.RAM  ][ tabWdgCol.TOTAL ]:set_text( string.format("%.2f GB",memData[1]/1024) or "N/A")
+                        tabWdg[ tabWdgRow.RAM  ][ tabWdgCol.FREE  ]:set_text( string.format("%.2f GB",memData[2]/1024) or "N/A")
                         tabWdg[ tabWdgRow.RAM  ][ tabWdgCol.USED  ]:set_text((string.format("%.1f",100-memData[2]/memData[1]*100) or "N/A") .. " %" )
-                        tabWdg[ tabWdgRow.SWAP ][ tabWdgCol.TOTAL ]:set_text( string.format("%.2fGB",memData[3]/1024) or "N/A")
-                        tabWdg[ tabWdgRow.SWAP ][ tabWdgCol.FREE  ]:set_text( string.format("%.2fGB",memData[4]/1024) or "N/A")
+                        tabWdg[ tabWdgRow.SWAP ][ tabWdgCol.TOTAL ]:set_text( string.format("%.1f GB",memData[3]/1024) or "N/A")
+                        tabWdg[ tabWdgRow.SWAP ][ tabWdgCol.FREE  ]:set_text( string.format("%.1f GB",memData[4]/1024) or "N/A")
                         tabWdg[ tabWdgRow.SWAP ][ tabWdgCol.USED  ]:set_text((string.format("%.1f",100-memData[4]/memData[3]*100) or "N/A") .. " %" )
                     end
                 end
@@ -178,7 +178,7 @@ local function repaint()
     imb:set_image(beautiful.path .. "Icon/reload.png")
     imb:buttons(button({ }, 1, function (geo) refreshStat() end))
 
-    mainMenu = menu({arrow_x=90,nokeyboardnav=true,item_width=198,width=200,arrow_type=radical.base.arrow_type.CENTERED})
+    mainMenu = menu({arrow_x=90,nokeyboardnav=true,item_width=198,width=210,arrow_type=radical.base.arrow_type.CENTERED})
     mainMenu:add_widget(radical.widgets.header(mainMenu,"USAGE",{suffix_widget=imb}),{height = 20 , width = 200})
 
     local m3 = wibox.layout.margin()
