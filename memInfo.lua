@@ -196,7 +196,7 @@ local function repaint()
     mainMenu:add_widget(radical.widgets.header(mainMenu,"USERS",{suffix_widget=imb}),{height = 20, width = 200})
     local memStat
 
-    usrMenu = embed({max_items=5})
+    usrMenu = embed({max_items=3})
     mainMenu:add_embeded_menu(usrMenu)
 
     mainMenu:add_widget(radical.widgets.header(mainMenu,"STATE",{suffix_widget=imb}),{height = 20 , width = 200})
@@ -207,7 +207,7 @@ local function repaint()
 
     mainMenu:add_widget(radical.widgets.header(mainMenu,"PROCESS",{suffix_widget=imb}),{height = 20 , width = 200})
 
-    topMenu = embed({max_items=3})
+    topMenu = embed({max_items=8})
     mainMenu:add_embeded_menu(topMenu)
 
     return mainMenu
