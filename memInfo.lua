@@ -39,6 +39,8 @@ local dataMenu = nil
 local process = {}
 local memState = {}
 
+local myTimer
+
 local tabWdg = nil
 local tabWdgCol = {
     TOTAL =1,
@@ -171,11 +173,11 @@ local function refreshStat()
 end
 
 local function repaint()
-    
+
     local imb = wibox.widget.imagebox()
     imb:set_image(beautiful.path .. "Icon/reload.png")
     imb:buttons(button({ }, 1, function (geo) refreshStat() end))
-    
+
     mainMenu = menu({arrow_x=90,nokeyboardnav=true,item_width=198,width=200,arrow_type=radical.base.arrow_type.CENTERED})
     mainMenu:add_widget(radical.widgets.header(mainMenu,"USAGE",{suffix_widget=imb}),{height = 20 , width = 200})
 
@@ -202,7 +204,7 @@ local function repaint()
     typeMenu = radical.widgets.piechart()
     mainMenu:add_widget(typeMenu,{height = 100 , width = 100})
 
-    
+
     mainMenu:add_widget(radical.widgets.header(mainMenu,"PROCESS",{suffix_widget=imb}),{height = 20 , width = 200})
 
     topMenu = embed({max_items=3})
@@ -220,6 +222,9 @@ local function new(margin, args)
         end
         if not dataMenu.visible then
             refreshStat()
+            myTimer:start()
+        else
+            myTimer:stop()
         end
         dataMenu.visible = not dataMenu.visible
     end
@@ -232,6 +237,9 @@ local function new(margin, args)
 
     volumewidget2:buttons (buttonclick)
 
+    --Create update timer
+    myTimer = capi.timer({ timeout = 1 })
+    myTimer:connect_signal("timeout", refreshStat)
     --Same old trick to fix first load
     --TODO: Fix first load problem with embed widgets
     toggle()
