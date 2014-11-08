@@ -213,10 +213,12 @@ local function new(margin, args)
 
     -- Generate governor list menu
     local function generateGovernorMenu(cpuN)
-        --if cpuN == nil then cpuN="cpu0" end
-
-        govMenu = menu({item_width=198,width=200,arrow_type=radical.base.arrow_type.CENTERED})
-        govMenu:add_item {text="Set global Governor",button1=function(_menu,item,mods) print("Hello World! ") end,sub_menu=function()
+        local govLabel
+        if cpuN ~= nil then govLabel="Set Cpu"..cpuN.." Governor"
+        else govLabel="Set global Governor" end
+        
+        govMenu = menu({arrow_type=radical.base.arrow_type.CENTERED})
+        govMenu:add_item {text=govLabel,sub_menu=function()
                 local govList=radical.context{}
 
                 --Load available governor list
@@ -226,12 +228,14 @@ local function new(margin, args)
                     --Generate menu list
                     if cpuN ~= nil then
                         --Specific Cpu
-                        --govList:add_item {text=gov,button1=function(_menu,item,mods) util.spawn_with_shell('sudo cpufreq-set -c '..cpuN..' -g '..gov) end}
+                        govList:add_item {text=gov,button1=function(_menu,item,mods) util.spawn_with_shell('sudo cpufreq-set -c '..cpuN..' -g '..gov) end}
                     else
                         --All cpu together
                         govList:add_item {text=gov,button1=function(_menu,item,mods) 
                                 for cpuI=0,data.coreN do
-                                    --util.spawn_with_shell('sudo cpufreq-set -c '..cpuI..' -g '..gov) 
+                                    --print('sudo cpufreq-set -c '..cpuI..' -g '..gov)
+                                    util.spawn('sudo cpufreq-set -c '..cpuI..' -g '..gov) 
+                                    govMenu.visible = false
                                 end
                             end}
                         --govList:add_item {text="Performance",button1=function(_menu,item,mods) print("Performances") end}
