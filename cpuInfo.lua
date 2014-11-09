@@ -113,7 +113,7 @@ local function new(margin, args)
         local pipe0 = io.popen('sensors | grep "Core" | grep -e ": *+[0-9]*" -o| grep -e "[0-9]*" -o')
         local i=0
         for line in pipe0:lines() do
-            main_table[i+1][3]:set_text(line)
+            main_table[i+1][3]:set_text(line.." °C")
             i=i+1
         end
         pipe0:close()
@@ -203,7 +203,6 @@ local function new(margin, args)
         if not data.menu then
             createDrawer()
             data.menu = regenMenu()
-        else
         end
         if not data.menu.visible then
             refresh()
@@ -251,9 +250,8 @@ local function new(margin, args)
     local function showGovernor()
         if not govMenu then
             generateGovernorMenu()
-        else
-            govMenu.visible = not govMenu.visible
         end
+            govMenu.visible = not govMenu.visible
     end
 
 
