@@ -22,7 +22,9 @@ local allinone     = require( "widgets.allinone"      )
 local fd_async     = require("utils.fd_async"         )
 
 local data     = {}
-local procMenu = nil
+
+--Menus
+local procMenu , govMenu = nil, nil
 
 local capi = { screen = screen , client = client ,
     mouse  = mouse  , timer  = timer  }
@@ -111,7 +113,7 @@ local function new(margin, args)
         local pipe0 = io.popen('sensors | grep "Core" | grep -e ": *+[0-9]*" -o| grep -e "[0-9]*" -o')
         local i=0
         for line in pipe0:lines() do
-            main_table[i+1][3]:set_text(line)
+            main_table[i+1][3]:set_text(line.." °C")
             i=i+1
         end
         pipe0:close()
@@ -127,12 +129,12 @@ local function new(margin, args)
         local emptyTable={};
         local tabHeader={};
         for i=1,data.coreN,1 do
-            emptyTable[i]= {"","","","",""}
+            emptyTable[i]= {"","","",""}
             tabHeader[i]="C"..(i-1)
         end
         local tab,widgets = radtab(emptyTable,
             {row_height=20,v_header = tabHeader,
-                h_header = {"GHz","Used","Temp","Cache","Governor"}
+                h_header = {"GHz","Used","Temp","Governor"}
             })
         main_table = widgets
 
@@ -145,7 +147,7 @@ local function new(margin, args)
             --Usage
             vicious.register(main_table[i+1][2], vicious.widgets.cpu,'$'..(i+2)..' %',1)
             --Governor
-            vicious.register(main_table[i+1][5], vicious.widgets.cpufreq,'$5',5,"cpu"..i)
+            vicious.register(main_table[i+1][4], vicious.widgets.cpufreq,'$5',5,"cpu"..i)
         end
         modelWl         = wibox.layout.fixed.horizontal()
         modelWl:add         ( cpuModel      )
@@ -197,13 +199,10 @@ local function new(margin, args)
         return aMenu
     end
 
-
-
     local function show()
         if not data.menu then
             createDrawer()
             data.menu = regenMenu()
-        else
         end
         if not data.menu.visible then
             refresh()
@@ -211,11 +210,56 @@ local function new(margin, args)
         data.menu.visible = not data.menu.visible
     end
 
+    -- Generate governor list menu
+    local function generateGovernorMenu(cpuN)
+        local govLabel
+        if cpuN ~= nil then govLabel="Set Cpu"..cpuN.." Governor"
+        else govLabel="Set global Governor" end
+        
+        govMenu = menu({arrow_type=radical.base.arrow_type.CENTERED})
+        govMenu:add_item {text=govLabel,sub_menu=function()
+                local govList=radical.context{}
+
+                --Load available governor list
+                local pipe0 = io.popen('cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_available_governors')
+                for i,gov in pairs(pipe0:read("*all"):split(" ")) do
+                    print("G:",gov)
+                    --Generate menu list
+                    if cpuN ~= nil then
+                        --Specific Cpu
+                        govList:add_item {text=gov,button1=function(_menu,item,mods) util.spawn_with_shell('sudo cpufreq-set -c '..cpuN..' -g '..gov) end}
+                    else
+                        --All cpu together
+                        govList:add_item {text=gov,button1=function(_menu,item,mods) 
+                                for cpuI=0,data.coreN do
+                                    --print('sudo cpufreq-set -c '..cpuI..' -g '..gov)
+                                    util.spawn('sudo cpufreq-set -c '..cpuI..' -g '..gov) 
+                                    govMenu.visible = false
+                                end
+                            end}
+                        --govList:add_item {text="Performance",button1=function(_menu,item,mods) print("Performances") end}
+                    end
+                end
+                pipe0:close()
+
+                return govList
+            end
+        }
+    end
+
+    local function showGovernor()
+        if not govMenu then
+            generateGovernorMenu()
+        end
+            govMenu.visible = not govMenu.visible
+    end
+
+
     local volumewidget2 = allinone()
     volumewidget2:set_icon(config.iconPath .. "brain.png")
     vicious.register(volumewidget2, vicious.widgets.cpu,'$1',1)
-    volumewidget2:buttons (util.table.join( button({ }, 1, function (geo) show(); data.menu.parent_geometry = geo end)))
-
+    volumewidget2:buttons (util.table.join( button({ }, 1, function (geo) show(); data.menu.parent_geometry = geo end),
+                                            button({ }, 3, function (geo) showGovernor(); govMenu.parent_geometry = geo end)))
 
     --Initial menu loading quick fix
     show()
