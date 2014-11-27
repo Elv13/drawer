@@ -35,7 +35,7 @@ function amixer_volume_int(format)
     else
         f = io.popen('amixer sget Master 2> /dev/null | tail -n1 |cut -f 7 -d " " | grep -o -e "[0-9]*"')
     end
-    
+
     if f then
         local l = f:read()
         f:close()
@@ -59,40 +59,6 @@ function amixer_volume_int(format)
     return {}
 end
 
-function soundInfo()
-    
-    --Add menu header
-    mainMenu:add_widget(radical.widgets.header(aMenu,"CHANNEL")  , {height = 20  , width = 200})
-    
-    --Parse Devices names
-    local f = io.popen("amixer scontrols | awk '{print$4}'| grep -oe '[a-zA-Z]*'")
-    while true do
-        local aChannal = f:read("*line")
-        if aChannal == nil then break end
-
-        local f2= io.popen('amixer sget '.. aChannal ..' 2> /dev/null | tail -n1 |cut -f 7 -d " " | grep -o -e "[0-9]*" 2> /dev/null')
-        local aVolume = (tonumber(f2:read("*line")) or 0) / 100
-        f2:close()
-
-        local mute = wibox.widget.imagebox()
-        mute:set_image(config.iconPath .. "volm.png")
-        
-        local volume = widget2.progressbar()
-        volume:set_width(80)
-        volume:set_height(20)
-        volume:set_background_color(beautiful.bg_normal)
-        volume:set_border_color(beautiful.fg_normal)
-        volume:set_color(beautiful.fg_normal)
-        volume:set_value(aVolume or 0)
-        if (widget2.progressbar.set_offset ~= nil) then
-            volume:set_offset(1)
-        end
-
-        mainMenu:add_item({text=aChannal,prefix_widget=mute,suffix_widget=volume})
-    end
-    f:close()
-end
-
 --args {
 --      pavuSink    =   Default sink number
 --      mode        =   "pulse" : Pulseaudio mode (Require pactl)
@@ -101,6 +67,55 @@ end
 local function new(mywibox3,args)
     --Variables---------------------------------------------------------
     local pavuSink, mode = nil,nil
+
+    --Functions---------------------------------------------------------
+    function volumeUp(devId)
+        util.spawn_with_shell("amixer sset "..devId.." 2%+ >/dev/null")
+    end
+    function volumeDown(devId)
+        util.spawn_with_shell("amixer sset "..devId.." 2%- >/dev/null")
+    end
+    function soundInfo()
+
+        --Add menu header
+        mainMenu:add_widget(radical.widgets.header(aMenu,"CHANNEL")  , {height = 20  , width = 200})
+
+        --Parse Devices names
+        local f = io.popen("amixer scontrols | awk '{print$4}'| grep -oe '[a-zA-Z]*'")
+        while true do
+            local aChannal = f:read("*line")
+            if aChannal == nil then break end
+
+            local f2= io.popen('amixer sget '.. aChannal ..' 2> /dev/null | tail -n1 |cut -f 7 -d " " | grep -o -e "[0-9]*" 2> /dev/null')
+            local aVolume = (tonumber(f2:read("*line")) or 0) / 100
+            f2:close()
+
+            local mute = wibox.widget.imagebox()
+            mute:set_image(config.iconPath .. "volm.png")
+
+            local volume = widget2.progressbar()
+            volume:set_width(80)
+            volume:set_height(20)
+            volume:set_background_color(beautiful.bg_normal)
+            volume:set_border_color(beautiful.fg_normal)
+            volume:set_color(beautiful.fg_normal)
+            volume:set_value(aVolume or 0)
+            if (widget2.progressbar.set_offset ~= nil) then
+                volume:set_offset(1)
+            end
+
+            mainMenu:add_item({text=aChannal,prefix_widget=mute,suffix_widget=volume,button4=function(geo,parent)
+                        print("Scroll UP") 
+                        aVolume=aVolume+0.02
+                        volume:set_value(aVolume)
+                    end, button5=function(geo,parent)
+                        print("Scroll Down") 
+                        aVolume=aVolume-0.02
+                        volume:set_value(aVolume)
+                    end})
+        end
+        f:close()
+    end
 
     --Constructor ------------------------------------------------------
     if volumewidget2 then return volumewidget2 end
