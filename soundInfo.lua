@@ -26,23 +26,23 @@ local volumewidget2 = nil
 local pavuId = -1
 local pavuSinkN=0
 
--- 0:undefined 1:alsa 2:pulseaudio
-local soundService = 0
+
 
 function amixer_volume_int(format)
     local f
-    if soundService == 2 then
+    if mode == "pulse" then
         f = io.popen('pactl list sinks | grep -A 9 "Sink #'..pavuSinkN..'" | tail -n 1 | cut -d "/" -f 2 | grep -o -e "[0-9]*"')
     else
         f = io.popen('amixer sget Master 2> /dev/null | tail -n1 |cut -f 7 -d " " | grep -o -e "[0-9]*"')
     end
+    
     if f then
         local l = f:read()
         f:close()
         local toReturn
         if (not l) or l == "" then
             toReturn = 0
-            if soundService ~= 2 then
+            if mode == "alsa" then
                 errcount = errcount + 1
                 if errcount > 10 then
                     print("Too many amixer failure, stopping listener")
@@ -60,12 +60,12 @@ function amixer_volume_int(format)
 end
 
 function soundInfo()
-    local f = io.popen('amixer 2> /dev/null | grep "Simple mixer control" | cut -f 2 -d "\'" | sort -u')
-
-    local soundHeader = wibox.widget.textbox()
-    soundHeader:set_markup(" <span color='".. beautiful.bg_normal .."'><b><tt>CHANALS</tt></b></span> ")
-
-    local counter = 0
+    
+    --Add menu header
+    mainMenu:add_widget(radical.widgets.header(aMenu,"CHANNEL")  , {height = 20  , width = 200})
+    
+    --Parse Devices names
+    local f = io.popen("amixer scontrols | awk '{print$4}'| grep -oe '[a-zA-Z]*'")
     while true do
         local aChannal = f:read("*line")
         if aChannal == nil then break end
@@ -76,12 +76,9 @@ function soundInfo()
 
         local mute = wibox.widget.imagebox()
         mute:set_image(config.iconPath .. "volm.png")
-
-        local plus = wibox.widget.imagebox()
-        plus:set_image(config.iconPath .. "tags/cross2.png")
-
+        
         local volume = widget2.progressbar()
-        volume:set_width(40)
+        volume:set_width(80)
         volume:set_height(20)
         volume:set_background_color(beautiful.bg_normal)
         volume:set_border_color(beautiful.fg_normal)
@@ -91,37 +88,48 @@ function soundInfo()
             volume:set_offset(1)
         end
 
-        local minus = wibox.widget.imagebox()
-        minus:set_image(config.iconPath .. "tags/minus2.png")
-        counter = counter +1
-        local l2 = wibox.layout.fixed.horizontal()
-        l2:add(plus)
-        l2:add(volume)
-        l2:add(minus)
-        mainMenu:add_item({text=aChannal,prefix_widget=mute,suffix_widget=l2})
+        mainMenu:add_item({text=aChannal,prefix_widget=mute,suffix_widget=volume})
     end
     f:close()
 end
 
-local function new(mywibox3,pavuSink)
+--args {
+--      pavuSink    =   Default sink number
+--      mode        =   "pulse" : Pulseaudio mode (Require pactl)
+--                      "alsa"  : Alsa mode
+--                      nil     : Search for pactl if not found use alsa
+local function new(mywibox3,args)
+    --Variables---------------------------------------------------------
+    local pavuSink, mode = nil,nil
+
+    --Constructor ------------------------------------------------------
     if volumewidget2 then return volumewidget2 end
     volumewidget2 = allinone()
     volumewidget2:set_icon(config.iconPath .. "vol.png")
 
-    --Check if pulseaudio is running
-    local f = io.popen('whereis pavucontrol | cut -d":" -f2| wc -c')
-    soundService = (tonumber(f:read("*all")) or 0)
-    if soundService > 2 then soundService=2
-    else soundService=1 end
-    
-    print("Ss:",soundService)
-    f:close()
+    --Parse args
+    if args ~= nil then
+        pavuSink    =  args.pavuSink
+        mode        =  args.mode
+    end
+
+    --Auto working mode selection
+    if not mode then
+        --Check if pulseaudio is running
+        local f = io.popen('whereis pavucontrol | cut -d":" -f2| wc -c')
+        local temp = (tonumber(f:read("*all")) or 0)
+        if temp > 2 then
+            mode    =   "pulse"
+            pavuSink=   pavuSink or 0
+        else mode="alsa" end
+        --
+        print("INFO@SoundInfo: Auto mode detected",soundService)
+        f:close()
+    end
 
     local btn
-    if (soundService <= 1) then
-        --If it's not running use alsa
-        soundService=1
-        print("pavucontrol not found")
+    if mode=="alsa" then
+        --Alsa mode (Classic)
 
         btn = util.table.join(
             button({ }, 1, function(geo)
@@ -153,21 +161,7 @@ local function new(mywibox3,pavuSink)
                 end)
         )
     else
-        --If pulseaudio is running
-        soundService=2
-        --Check for argument sink
-        if pavuSink ~= nil then
-            local pipe0=io.popen('pactl list sinks | grep -cA 2 "^Sink #'..pavusink..'"')
-            if tonumber(pipe0:read("*all") or 0) ~= 1 then
-                --If exists use it
-                pavuSinkN=pavusink
-            else
-                --If not use the first
-                pavusinkN=0
-            end
-            pipe0:close()
-        end
-        
+        --Pulseaudio mode
         btn = util.table.join(
             button({ }, 1, function(geo)
                     if pavuId == -1 then
@@ -180,20 +174,20 @@ local function new(mywibox3,pavuSink)
                     end
                 end),
             button({ }, 3, function()
-                                util.spawn_with_shell("pactl set-sink-mute "..pavuSinkN.." toggle")
+                    util.spawn_with_shell("pactl set-sink-mute "..pavuSinkN.." toggle")
                 end),
             button({ }, 4, function()
-                                if volumewidget2.percent > 1.48 then
-                                    volumewidget2.percent=1.5
-                                    util.spawn_with_shell("pactl set-sink-volume "..pavuSinkN.." -- 150%")
-                                else
-                                    volumewidget2.percent=volumewidget2.percent+0.02
-                                    util.spawn_with_shell("pactl set-sink-volume "..pavuSinkN.." -- +2%")
-                                end
-                    
+                    if volumewidget2.percent > 1.48 then
+                        volumewidget2.percent=1.5
+                        util.spawn_with_shell("pactl set-sink-volume "..pavuSinkN.." -- 150%")
+                    else
+                        volumewidget2.percent=volumewidget2.percent+0.02
+                        util.spawn_with_shell("pactl set-sink-volume "..pavuSinkN.." -- +2%")
+                    end
+
                 end),
             button({ }, 5, function()
-                        util.spawn_with_shell("pactl set-sink-volume "..pavuSinkN.." -- -2%")
+                    util.spawn_with_shell("pactl set-sink-volume "..pavuSinkN.." -- -2%")
                     if volumewidget2.percent < 0.02 then volumewidget2.percent=0
                     else volumewidget2.percent=volumewidget2.percent-0.02 end
                 end)
