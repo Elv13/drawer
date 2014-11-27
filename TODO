@@ -1,5 +1,10 @@
-memInfo:
+memInfo
+
 cpuInfo
+	*Check graph data
 	*Extended governor Name
 netInfo
 	*Local lookup
+dateInfo
+	*Add weather
+	*Add other timezones

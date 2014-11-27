@@ -39,7 +39,7 @@ local dataMenu = nil
 local process = {}
 local memState = {}
 
-local myTimer
+--local myTimer
 
 local tabWdg = nil
 local tabWdgCol = {
@@ -196,7 +196,7 @@ local function repaint()
     mainMenu:add_widget(radical.widgets.header(mainMenu,"USERS",{suffix_widget=imb}),{height = 20, width = 200})
     local memStat
 
-    usrMenu = embed({max_items=5})
+    usrMenu = embed({max_items=3})
     mainMenu:add_embeded_menu(usrMenu)
 
     mainMenu:add_widget(radical.widgets.header(mainMenu,"STATE",{suffix_widget=imb}),{height = 20 , width = 200})
@@ -207,7 +207,7 @@ local function repaint()
 
     mainMenu:add_widget(radical.widgets.header(mainMenu,"PROCESS",{suffix_widget=imb}),{height = 20 , width = 200})
 
-    topMenu = embed({max_items=3})
+    topMenu = embed({max_items=8})
     mainMenu:add_embeded_menu(topMenu)
 
     return mainMenu
@@ -222,9 +222,9 @@ local function new(margin, args)
         end
         if not dataMenu.visible then
             refreshStat()
-            myTimer:start()
+            --myTimer:start()
         else
-            myTimer:stop()
+            --myTimer:stop()
         end
         dataMenu.visible = not dataMenu.visible
     end
@@ -238,8 +238,8 @@ local function new(margin, args)
     volumewidget2:buttons (buttonclick)
 
     --Create update timer
-    myTimer = capi.timer({ timeout = 1 })
-    myTimer:connect_signal("timeout", refreshStat)
+    --myTimer = capi.timer({ timeout = 1 })
+    --myTimer:connect_signal("timeout", refreshStat)
     --Same old trick to fix first load
     --TODO: Fix first load problem with embed widgets
     toggle()
