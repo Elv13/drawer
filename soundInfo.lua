@@ -28,36 +28,7 @@ local pavuSinkN=0
 
 
 
-function amixer_volume_int(format)
-    local f
-    if mode == "pulse" then
-        f = io.popen('pactl list sinks | grep -A 9 "Sink #'..pavuSinkN..'" | tail -n 1 | cut -d "/" -f 2 | grep -o -e "[0-9]*"')
-    else
-        f = io.popen('amixer sget Master 2> /dev/null | tail -n1 |cut -f 7 -d " " | grep -o -e "[0-9]*"')
-    end
 
-    if f then
-        local l = f:read()
-        f:close()
-        local toReturn
-        if (not l) or l == "" then
-            toReturn = 0
-            if mode == "alsa" then
-                errcount = errcount + 1
-                if errcount > 10 then
-                    print("Too many amixer failure, stopping listener")
-                    vicious.unregister(volumewidget2)
-                end
-            end
-        else
-            toReturn = tonumber(l)
-        end
-        return {toReturn}
-    else
-        print("Calling amixer failed")
-    end
-    return {}
-end
 
 --args {
 --      pavuSink    =   Default sink number
@@ -67,7 +38,7 @@ end
 local function new(mywibox3,args)
     --Variables---------------------------------------------------------
     local pavuSink, mode = nil,nil
-
+    local volumes = {}
     --Functions---------------------------------------------------------
     function volumeUp(devId)
         util.spawn_with_shell("amixer sset "..devId.." 2%+ >/dev/null")
@@ -75,6 +46,31 @@ local function new(mywibox3,args)
     function volumeDown(devId)
         util.spawn_with_shell("amixer sset "..devId.." 2%- >/dev/null")
     end
+    function volumeSet(devId,volume)
+        --Limit to 0~1
+        if volume > 1 then volume=1
+        elseif volume<0 then volume=0 end
+
+        util.spawn_with_shell("amixer sset "..devId.." "..(volume*100).."% >/dev/null")
+    end
+    function volumeGet(devId)
+        local f
+        if mode == "pulse" then
+            f = io.popen('pactl list sinks | grep -A 9 "Sink #'..devId..'" | tail -n 1 | cut -d "/" -f 2 | grep -o -e "[0-9]*"')
+        else
+            f = io.popen("amixer sget "..devId.." | awk '/Front.*Playback/{print $5; exit}'| grep -o -e '[0-9]*'")
+        end
+
+        if f then
+            local l = f:read()
+            f:close()
+            return tonumber(l)
+        else
+            print("Calling amixer failed")
+        end
+        return nil
+    end
+
     function soundInfo()
 
         --Add menu header
@@ -104,19 +100,41 @@ local function new(mywibox3,args)
                 volume:set_offset(1)
             end
 
-            mainMenu:add_item({text=aChannal,prefix_widget=mute,suffix_widget=volume,button4=function(geo,parent)
-                        print("Scroll UP") 
+            mainMenu:add_item({text=aChannal,prefix_widget=mute,suffix_widget=volume,button4=function(geo,parent) 
                         aVolume=aVolume+0.02
                         volume:set_value(aVolume)
+                        volume:emit_signal("widget::updated")
+                        volumeSet(aChannal,aVolume)
                     end, button5=function(geo,parent)
-                        print("Scroll Down") 
                         aVolume=aVolume-0.02
                         volume:set_value(aVolume)
+                        volume:emit_signal("widget::updated")
+                        volumeSet(aChannal,aVolume)
                     end})
         end
         f:close()
     end
 
+    --Master Volume parser for widget
+    function amixer_volume_int(format)
+        local l = volumeGet("Master")
+        local toReturn
+        if (not l) or l == "" then
+            toReturn = 0
+            if mode == "alsa" then
+                errcount = errcount + 1
+                if errcount > 10 then
+                    print("Too many amixer failure, stopping listener")
+                    vicious.unregister(volumewidget2)
+                end
+            end
+        else
+            --Save master volume
+            masterVolume = tonumber(l)
+            return {masterVolume}
+        end
+        return {}
+    end
     --Constructor ------------------------------------------------------
     if volumewidget2 then return volumewidget2 end
     volumewidget2 = allinone()
@@ -164,13 +182,12 @@ local function new(mywibox3,args)
                     util.spawn_with_shell("amixer set Master 1+ toggle")
                 end),
             button({ }, 4, function()
-                    util.spawn_with_shell("amixer sset Master 2%+ >/dev/null")
+                    volumeUp('Master')
                     if volumewidget2.percent > 0.98 then volumewidget2.percent=1
                     else volumewidget2.percent=volumewidget2.percent+0.02 end
-                    print("V:",volumewidget2.percent)
                 end),
             button({ }, 5, function()
-                    util.spawn_with_shell("amixer sset Master 2%- >/dev/null")
+                    volumeDown('Master')
                     if volumewidget2.percent < 0.02 then volumewidget2.percent=0
                     else volumewidget2.percent=volumewidget2.percent-0.02 end
                 end)
