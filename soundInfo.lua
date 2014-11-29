@@ -115,6 +115,45 @@ local function new(mywibox3,args)
         f:close()
     end
 
+    -- Menu drawer for pulseaudio
+    function drawPulseMenu()
+        --Parse pactl stuff
+        local pipe=io.popen("pactl list | awk -f "..util.getdir("config").."/drawer/Scripts/parsePactl.awk")
+        for line in pipe:lines() do
+            
+            local data=string.split(line,";")
+            
+            local mute = wibox.widget.imagebox()
+            mute:set_image(config.iconPath .. "volm.png")
+            
+            local aVolume=tonumber(data[3])
+            
+            local volume = widget2.progressbar()
+            volume:set_width(80)
+            volume:set_height(20)
+            volume:set_background_color(beautiful.bg_normal)
+            volume:set_border_color(beautiful.fg_normal)
+            volume:set_color(beautiful.fg_normal)
+            volume:set_value(aVolume or 0)
+            if (widget2.progressbar.set_offset ~= nil) then
+                volume:set_offset(1)
+            end
+            
+            mainMenu:add_item({text=data[4],prefix_widget=mute,suffix_widget=volume,button4=function(geo,parent) 
+                        aVolume=aVolume+0.02
+                        volume:set_value(aVolume)
+                        volume:emit_signal("widget::updated")
+                        volumeSet(aChannal,aVolume)
+                    end, button5=function(geo,parent)
+                        aVolume=aVolume-0.02
+                        volume:set_value(aVolume)
+                        volume:emit_signal("widget::updated")
+                        volumeSet(aChannal,aVolume)
+                    end})
+        end
+        pipe:close()
+    end
+
     --Master Volume parser for widget
     function amixer_volume_int(format)
         local l = volumeGet("Master")
@@ -135,6 +174,24 @@ local function new(mywibox3,args)
         end
         return {}
     end
+
+    function toggle()
+        if not mainMenu then
+            mainMenu = radical.context({width=200,arrow_type=radical.base.arrow_type.CENTERED})
+            if mode == "alsa" then
+                soundInfo()
+            else
+                drawPulseMenu()
+            end
+        end
+        mainMenu.visible = not mainMenu.visible
+        mainMenu.parent_geometry = geo
+
+        if mywibox3 and type(mywibox3) == "wibox" then
+            mywibox3.visible = not mywibox3.visible
+        end
+        musicBarVisibility = true
+    end
     --Constructor ------------------------------------------------------
     if volumewidget2 then return volumewidget2 end
     volumewidget2 = allinone()
@@ -149,7 +206,7 @@ local function new(mywibox3,args)
     --Auto working mode selection
     if not mode then
         --Check if pulseaudio is running
-        local f = io.popen('whereis pavucontrol | cut -d":" -f2| wc -c')
+        local f = io.popen('whereis pactl | cut -d":" -f2| wc -c')
         local temp = (tonumber(f:read("*all")) or 0)
         if temp > 2 then
             mode    =   "pulse"
@@ -196,14 +253,7 @@ local function new(mywibox3,args)
         --Pulseaudio mode
         btn = util.table.join(
             button({ }, 1, function(geo)
-                    if pavuId == -1 then
-                        --Open pavucontrol
-                        pavuId=(util.spawn("pavucontrol") or -1)
-                    else
-                        --Close open window
-                        util.spawn_with_shell('kill -3 ' ..pavuId)
-                        pavuId=-1
-                    end
+                    toggle()
                 end),
             button({ }, 3, function()
                     util.spawn_with_shell("pactl set-sink-mute "..pavuSinkN.." toggle")
