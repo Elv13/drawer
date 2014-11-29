@@ -28,7 +28,7 @@ local pavuSinkN=0
 
 
 -- Adds a line for a device
-function addVolumeDevice(mainMenu,name,aVolume,isMute)
+function addVolumeDevice(mainMenu,name,aVolume,isMute,id)
     
     local mute = wibox.widget.imagebox()
     mute:set_image(config.iconPath .. "volm.png")
@@ -131,8 +131,25 @@ local function new(mywibox3,args)
             f:close()
             return mainMenu
         end
-    else
+    elseif mode == "pulse" then
         --Pulseaudio mode functions------------------------------------
+        
+        moduleSound.volumeUp=function(devType,id)
+            util.spawn_with_shell("pactl set-"..devType.."-volume "..id.." -- +2%")
+            print("pactl set-"..devType.."-volume "..id.." -- +2%")
+        end
+        moduleSound.volumeDown=function(devType,id)
+            util.spawn_with_shell("pactl set-"..devType.."-volume "..id.." -- -2%")
+            print("pactl set-"..devType.."-volume "..id.." -- -2%")
+        end
+        moduleSound.volumeSet=function(devId,volume)
+            --Limit to 0~1
+            if volume > 1 then volume=1
+            elseif volume<0 then volume=0 end
+
+            util.spawn_with_shell("amixer sset "..devId.." "..(volume*100).."% >/dev/null")
+        end
+        
         -- Menu drawer for pulseaudio
         moduleSound.drawMenu=function()
             local mainMenu=  radical.context({width=300,arrow_type=radical.base.arrow_type.CENTERED})
@@ -142,10 +159,11 @@ local function new(mywibox3,args)
 
                 local data=string.split(line,";")
 
+                local aVolume=tonumber(data[3]:match("%d*"))/100
+
+                print(data[4],aVolume )
                 local mute = wibox.widget.imagebox()
                 mute:set_image(config.iconPath .. "volm.png")
-
-                local aVolume=tonumber(data[3])
 
                 local volume = widget2.progressbar()
                 volume:set_width(80)
@@ -158,22 +176,29 @@ local function new(mywibox3,args)
                     volume:set_offset(1)
                 end
 
+                --Add line and set scroll volume control
                 mainMenu:add_item({text=data[4],prefix_widget=mute,suffix_widget=volume,button4=function(geo,parent) 
                             aVolume=aVolume+0.02
+                            if aVolume>1 then aVolume=1 end
                             volume:set_value(aVolume)
                             volume:emit_signal("widget::updated")
-                            volumeSet(aChannal,aVolume)
+                            moduleSound.volumeUp(data[1],data[2])
                         end, button5=function(geo,parent)
                             aVolume=aVolume-0.02
+                            if aVolume<0 then aVolume=0 end
                             volume:set_value(aVolume)
                             volume:emit_signal("widget::updated")
-                            volumeSet(aChannal,aVolume)
+                            moduleSound.volumeDown(data[1],data[2])
+                            --moduleSound.volumeSet(aChannal,aVolume)
                         end})
+                
             end
             pipe:close()
             
             return mainMenu
         end
+        
+        
     end
     
     --Master Volume parser for widget

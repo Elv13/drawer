@@ -15,6 +15,6 @@ FS = ":"
     FS = " ";
     desc=$2
 }
-/Base Volume/{ FS="#"; print type ";" id ";" $5 ";" desc}
+/Volume:.*front/{ FS="#"; print type ";" id ";" $5 ";" desc}
 
 END{}
