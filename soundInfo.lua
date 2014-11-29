@@ -118,26 +118,28 @@ local function new(mywibox3,args)
         moduleSound.itemScrollDown=function(devId)
             util.spawn_with_shell("amixer sset "..devId.." 2%- >/dev/null")
         end
-
+        moduleSound.itemToggleMute=function(devId)
+            util.spawn_with_shell("amixer set "..devId.." 1+ toggle")
+            --print("pactl set-"..dev.type.."-mute "..dev.id.." toggle")
+        end
         moduleSound.drawMenu=function()
             local mainMenu=  radical.context({width=200,arrow_type=radical.base.arrow_type.CENTERED})
             --Add menu header
             mainMenu:add_widget(radical.widgets.header(aMenu,"CHANNEL")  , {height = 20  , width = 200})
 
             --Parse Devices names
-            local f = io.popen("amixer scontrols | awk '{print$4}'| grep -oe '[a-zA-Z]*'")
-            while true do
-                local aChannal = f:read("*line")
-                if aChannal == nil then break end
-
-                local f2= io.popen('amixer sget '.. aChannal ..' 2> /dev/null | tail -n1 |cut -f 7 -d " " | grep -o -e "[0-9]*" 2> /dev/null')
-                local aVolume = (tonumber(f2:read("*line")) or 0) / 100
-                f2:close()
-
+            local pipe = io.popen("amixer | awk -f "..util.getdir("config").."/drawer/Scripts/parseAlsa.awk")
+            for line in pipe:lines() do
+                local data=string.split(line,";")
+                local aChannal = data[1]
+                local aVolume = (tonumber(data[2]:match("%d+")) or 0) / 100
+                print("data",data[2]:match("%d+"))
+                local isMute = false
+                if data[3]:match("off") then isMute=true end
                 --Add device
-                addVolumeDevice(mainMenu,aChannal,aVolume,false,aChannal)
+                addVolumeDevice(mainMenu,aChannal,aVolume,isMute,aChannal)
             end
-            f:close()
+            pipe:close()
             return mainMenu
         end
 
@@ -166,7 +168,7 @@ local function new(mywibox3,args)
             local pipe=io.popen("pactl list | awk -f "..util.getdir("config").."/drawer/Scripts/parsePactl.awk")
             for line in pipe:lines() do
                 local data=string.split(line,";")
-                local aVolume=tonumber(data[3]:match("%d*"))/100
+                local aVolume=tonumber(data[3]:match("%d+"))/100
                 local isMute = false
                 if data[4]:match("yes") then isMute=true end
                 --Add item to menu
