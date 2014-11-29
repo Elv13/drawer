@@ -125,7 +125,7 @@ local function new(mywibox3,args)
                 f2:close()
 
                 --Add device
-                addVolumeDevice(mainMenu,aChannal,aVolume,aChannal)
+                addVolumeDevice(mainMenu,aChannal,aVolume,false,aChannal)
             end
             f:close()
             return mainMenu
