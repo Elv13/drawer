@@ -15,6 +15,9 @@ FS = ":"
     FS = " ";
     desc=$2
 }
-/Volume:.*front/{ FS="#"; print type ";" id ";" $5 ";" desc}
+/Mute/{
+    mute=$2
+    }
+/Volume:.*front/{ FS="#"; print type ";" id ";" $5 ";" mute ";" desc}
 
 END{}
