@@ -28,10 +28,16 @@ local pavuSinkN=0
 
 
 -- Adds a line for a device
-function addVolumeDevice(mainMenu,name,aVolume,isMute,id)
-    
-    local mute = wibox.widget.imagebox()
-    mute:set_image(config.iconPath .. "volm.png")
+-- mainMenu:    menu in wich add item
+-- name:        dev name
+-- aVolume:     dev volume
+-- isMute
+-- commArgs:    arguments to be passed to function itemScrollUp and itemScrollDown
+function addVolumeDevice(mainMenu,name,aVolume,isMute,commArgs)
+
+    local icon = wibox.widget.imagebox()
+    if isMute then icon:set_image(config.iconPath .. "volm.png")
+    else icon:set_image(config.iconPath .. "vol3.png") end
 
     local volume = widget2.progressbar()
     volume:set_width(80)
@@ -45,19 +51,18 @@ function addVolumeDevice(mainMenu,name,aVolume,isMute,id)
     end
 
     --Add line and set scroll volume control
-    mainMenu:add_item({text=name,prefix_widget=mute,suffix_widget=volume,button4=function(geo,parent) 
+    mainMenu:add_item({text=name,prefix_widget=icon,suffix_widget=volume,button4=function(geo,parent) 
                 aVolume=aVolume+0.02
                 if aVolume>1 then aVolume=1 end
                 volume:set_value(aVolume)
                 volume:emit_signal("widget::updated")
-                moduleSound.volumeUp(name)
+                moduleSound.itemScrollUp(commArgs)
             end, button5=function(geo,parent)
                 aVolume=aVolume-0.02
                 if aVolume<0 then aVolume=0 end
                 volume:set_value(aVolume)
                 volume:emit_signal("widget::updated")
-                moduleSound.volumeDown(name)
-                --moduleSound.volumeSet(aChannal,aVolume)
+                moduleSound.itemScrollDown(commArgs)
             end})
 end
 
@@ -97,18 +102,11 @@ local function new(mywibox3,args)
     --Functions------------------------------------------------------------------------
     if mode == "alsa" then 
         -- Alsa mode functions-----------------------------------
-        moduleSound.volumeUp=function(devId)
+        moduleSound.itemScrollUp=function(devId)
             util.spawn_with_shell("amixer sset "..devId.." 2%+ >/dev/null")
         end
-        moduleSound.volumeDown=function(devId)
+        moduleSound.itemScrollDown=function(devId)
             util.spawn_with_shell("amixer sset "..devId.." 2%- >/dev/null")
-        end
-        moduleSound.volumeSet=function(devId,volume)
-            --Limit to 0~1
-            if volume > 1 then volume=1
-            elseif volume<0 then volume=0 end
-
-            util.spawn_with_shell("amixer sset "..devId.." "..(volume*100).."% >/dev/null")
         end
 
         moduleSound.drawMenu=function()
@@ -126,81 +124,46 @@ local function new(mywibox3,args)
                 local aVolume = (tonumber(f2:read("*line")) or 0) / 100
                 f2:close()
 
-                addVolumeDevice(mainMenu,aChannal,aVolume)
+                --Add device
+                addVolumeDevice(mainMenu,aChannal,aVolume,aChannal)
             end
             f:close()
             return mainMenu
         end
+
+
     elseif mode == "pulse" then
         --Pulseaudio mode functions------------------------------------
-        
-        moduleSound.volumeUp=function(devType,id)
-            util.spawn_with_shell("pactl set-"..devType.."-volume "..id.." -- +2%")
-            print("pactl set-"..devType.."-volume "..id.." -- +2%")
+        moduleSound.itemScrollUp= function(dev)
+            util.spawn_with_shell("pactl set-"..dev.type.."-volume "..dev.id.." -- +2%")
+            --print("pactl set-"..dev.type.."-volume "..dev.id.." -- +2%")
         end
-        moduleSound.volumeDown=function(devType,id)
-            util.spawn_with_shell("pactl set-"..devType.."-volume "..id.." -- -2%")
-            print("pactl set-"..devType.."-volume "..id.." -- -2%")
+        moduleSound.itemScrollDown=function(dev)
+            util.spawn_with_shell("pactl set-"..dev.type.."-volume "..dev.id.." -- -2%")
+            --print("pactl set-"..dev.type.."-volume "..dev.id.." -- -2%")
         end
-        moduleSound.volumeSet=function(devId,volume)
-            --Limit to 0~1
-            if volume > 1 then volume=1
-            elseif volume<0 then volume=0 end
 
-            util.spawn_with_shell("amixer sset "..devId.." "..(volume*100).."% >/dev/null")
-        end
-        
         -- Menu drawer for pulseaudio
         moduleSound.drawMenu=function()
             local mainMenu=  radical.context({width=300,arrow_type=radical.base.arrow_type.CENTERED})
+            --Add header
+            mainMenu:add_widget(radical.widgets.header(aMenu,"CHANNEL")  , {height = 20  , width = 200})
             --Parse pactl stuff
             local pipe=io.popen("pactl list | awk -f "..util.getdir("config").."/drawer/Scripts/parsePactl.awk")
             for line in pipe:lines() do
-
                 local data=string.split(line,";")
-
                 local aVolume=tonumber(data[3]:match("%d*"))/100
-
-                print(data[4],aVolume )
-                local mute = wibox.widget.imagebox()
-                mute:set_image(config.iconPath .. "volm.png")
-
-                local volume = widget2.progressbar()
-                volume:set_width(80)
-                volume:set_height(20)
-                volume:set_background_color(beautiful.bg_normal)
-                volume:set_border_color(beautiful.fg_normal)
-                volume:set_color(beautiful.fg_normal)
-                volume:set_value(aVolume or 0)
-                if (widget2.progressbar.set_offset ~= nil) then
-                    volume:set_offset(1)
-                end
-
-                --Add line and set scroll volume control
-                mainMenu:add_item({text=data[4],prefix_widget=mute,suffix_widget=volume,button4=function(geo,parent) 
-                            aVolume=aVolume+0.02
-                            if aVolume>1 then aVolume=1 end
-                            volume:set_value(aVolume)
-                            volume:emit_signal("widget::updated")
-                            moduleSound.volumeUp(data[1],data[2])
-                        end, button5=function(geo,parent)
-                            aVolume=aVolume-0.02
-                            if aVolume<0 then aVolume=0 end
-                            volume:set_value(aVolume)
-                            volume:emit_signal("widget::updated")
-                            moduleSound.volumeDown(data[1],data[2])
-                            --moduleSound.volumeSet(aChannal,aVolume)
-                        end})
-                
+                --Add item to menu
+                addVolumeDevice(mainMenu,data[4],aVolume,false,{type=data[1],id=data[2]})
             end
             pipe:close()
-            
+
             return mainMenu
         end
-        
-        
+
+
     end
-    
+
     --Master Volume parser for widget
     function amixer_volume_int(format)
         local f= io.popen("amixer sget Master | awk '/Front.*Playback/{print $5; exit}'| grep -o -e '[0-9]*'")
@@ -210,15 +173,15 @@ local function new(mywibox3,args)
         else
             print("Calling amixer failed")
         end
-        
+
         local toReturn
         if (not l) or l == "" then
             toReturn = 0
-                errcount = errcount + 1
-                if errcount > 10 then
-                    print("Too many amixer failure, stopping listener")
-                    vicious.unregister(volumewidget2)
-                end
+            errcount = errcount + 1
+            if errcount > 10 then
+                print("Too many amixer failure, stopping listener")
+                vicious.unregister(volumewidget2)
+            end
         else
             --Save master volume
             masterVolume = tonumber(l)
@@ -232,12 +195,12 @@ local function new(mywibox3,args)
             mainMenu = moduleSound.drawMenu()
             mainMenu.parent_geometry = geo
             mainMenu.visible = true
-            else
+        else
             --Close and destroy main menu
             mainMenu.visible = false
             mainMenu = nil
         end
-        
+
 
         if mywibox3 and type(mywibox3) == "wibox" then
             mywibox3.visible = not mywibox3.visible
