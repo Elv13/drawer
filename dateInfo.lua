@@ -21,6 +21,7 @@ local mainMenu = nil
 
 local month = {"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"}
 
+
 local function getHour(input)
   local toReturn
   if input < 0 then
@@ -35,18 +36,18 @@ end
 
 local function testFunc()
   local dateInfo = ""
-    local df=io.popen('date -u +%T')
-  dateInfo = dateInfo .. "\n<b> UTC: </b><i>" ..  df:read("*all") .. "</i>"
---  dateInfo = dateInfo .. "<b><u>Europe:</u></b>"
---  dateInfo = dateInfo .. "\n<b> CET: </b><i>" ..  getHour(os.date('%H') + 6) .. ":" .. os.date('%M').. ":" .. os.date('%S') .. "</i>"
---  dateInfo = dateInfo .. "\n<b> EET: </b><i>" ..  getHour(os.date('%H') + 7) .. ":" .. os.date('%M').. ":" .. os.date('%S') .. "</i>"
---  dateInfo = dateInfo .. "\n\n<b><u>America:</u></b>"
---  dateInfo = dateInfo .. "\n<b> EST: </b><i>" ..  getHour(os.date('%H') + 0) .. ":" .. os.date('%M').. ":" .. os.date('%S') .. "</i>"
---  dateInfo = dateInfo .. "\n<b> PST: </b><i>" ..  getHour(os.date('%H') - 3) .. ":" .. os.date('%M').. ":" .. os.date('%S') .. "</i>"
---  dateInfo = dateInfo .. "\n<b> CST: </b><i>" ..  getHour(os.date('%H') - 1) .. ":" .. os.date('%M').. ":" .. os.date('%S') .. "</i>"
---  dateInfo = dateInfo .. "\n\n<b><u>Japan:</u></b>"
---  dateInfo = dateInfo .. "\n<b> JST: </b><i>" ..  getHour(os.date('%H') + 13) .. ":" .. os.date('%M').. ":" .. os.date('%S') .. "</i>\n\n"
-  df:close()
+  local pipe=io.popen(util.getdir("config")..'/drawer/Scripts/worldTime.sh')
+  dateInfo=pipe:read("*a")
+  pipe:close()
+  --  dateInfo = dateInfo .. "<b><u>Europe:</u></b>"
+  --  dateInfo = dateInfo .. "\n<b> CET: </b><i>" ..  getHour(os.date('%H') + 6) .. ":" .. os.date('%M').. ":" .. os.date('%S') .. "</i>"
+  --  dateInfo = dateInfo .. "\n<b> EET: </b><i>" ..  getHour(os.date('%H') + 7) .. ":" .. os.date('%M').. ":" .. os.date('%S') .. "</i>"
+  --  dateInfo = dateInfo .. "\n\n<b><u>America:</u></b>"
+  --  dateInfo = dateInfo .. "\n<b> EST: </b><i>" ..  getHour(os.date('%H') + 0) .. ":" .. os.date('%M').. ":" .. os.date('%S') .. "</i>"
+  --  dateInfo = dateInfo .. "\n<b> PST: </b><i>" ..  getHour(os.date('%H') - 3) .. ":" .. os.date('%M').. ":" .. os.date('%S') .. "</i>"
+  --  dateInfo = dateInfo .. "\n<b> CST: </b><i>" ..  getHour(os.date('%H') - 1) .. ":" .. os.date('%M').. ":" .. os.date('%S') .. "</i>"
+  --  dateInfo = dateInfo .. "\n\n<b><u>Japan:</u></b>"
+  --  dateInfo = dateInfo .. "\n<b> JST: </b><i>" ..  getHour(os.date('%H') + 13) .. ":" .. os.date('%M').. ":" .. os.date('%S') .. "</i>\n\n"
   return {dateInfo}
 end
 
@@ -146,7 +147,7 @@ local function update_date()
       {
         bg=beautiful.fg_normal,
         fg=beautiful.bg_alternate,
-  --       height=beautiful.default_height,
+        --       height=beautiful.default_height,
         margins=beautiful.default_height*.2,
         padding=2,
         padding_right=3
@@ -169,16 +170,16 @@ local function new(screen, args)
   right_layout:add(ib2)
 
   right_layout:buttons (util.table.join(button({ }, 1, function (geo)
-      if not mainMenu then
-        mainMenu = menu({arrow_type=radical.base.arrow_type.CENTERED})
-        min_width = createDrawer()
-        mainMenu.width = min_width + 2*mainMenu.border_width + 150
-        mainMenu._internal.width = min_width
-      end
-      mainMenu.parent_geometry = geo
-      mainMenu.visible = not mainMenu.visible
-  end)))
-  
+          if not mainMenu then
+            mainMenu = menu({arrow_type=radical.base.arrow_type.CENTERED})
+            min_width = createDrawer()
+            mainMenu.width = min_width + 2*mainMenu.border_width + 150
+            mainMenu._internal.width = min_width
+          end
+          mainMenu.parent_geometry = geo
+          mainMenu.visible = not mainMenu.visible
+        end)))
+
   return right_layout
 end
 
