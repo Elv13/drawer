@@ -5,8 +5,8 @@ do
 echo "$var"
 done
 #UTC
-date -u                       +"<b>UTC:        </b><i> %T</i>"
+date -u                       +"<b><span size=\"x-large\">⌚</span>UTC:        </b><i> %T</i>"
 #Places
-TZ='America/Toronto' date     +"<b>Toronto:  </b><i> %T</i>"
-TZ='Europe/Rome' date         +"<b>Rome:      </b><i> %T</i>"
-TZ='Asia/Shanghai' date       +"<b>Shanghai:</b><i> %T</i>"
+TZ='America/Toronto' date     +"<b><span size=\"x-large\">⌚</span>Toronto:  </b><i> %T</i>"
+TZ='Europe/Rome' date         +"<b><span size=\"x-large\">⌚</span>Rome:      </b><i> %T</i>"
+TZ='Asia/Shanghai' date       +"<b><span size=\"x-large\">⌚</span>Shanghai:</b><i> %T</i>"
