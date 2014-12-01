@@ -7,5 +7,5 @@ cpuInfo
 netInfo
 	*Local lookup
 dateInfo
-	*Add weather
-	*Add other timezones
+	*Add weather webcam
+	*Timezones selection by arguments
