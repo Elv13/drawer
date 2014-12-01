@@ -111,23 +111,23 @@ local function createDrawer()
   calInfo:set_markup(someText2)
   local testImage2       = wibox.widget.imagebox()
   local testImage3                       = wibox.widget.imagebox()
-  testImage3:set_image("/tmp/flower_crop.jpg")
+  testImage2:set_image("/tmp/cam.jpg")
 
-  local spacer96                   = wibox.widget.textbox()
-  spacer96:set_text("\n\n")
+  --local spacer96                   = wibox.widget.textbox()
+  --spacer96:set_text("\n\n")
 
   vicious.register(timeInfo,  testFunc, '$1',1)
 
-  mainMenu:add_widget(radical.widgets.header(mainMenu, "CALANDAR"     ),{height = 20 , width = 200})
+  mainMenu:add_widget(radical.widgets.header(mainMenu, "CALENDAR"     ),{height = 20 , width = 200})
   mainMenu:add_widget(calInfo)
   mainMenu:add_widget(radical.widgets.header(mainMenu, "INTERNATIONAL"),{height = 20 , width = 200})
   mainMenu:add_widget(timeInfo)
   mainMenu:add_widget(radical.widgets.header(mainMenu, "SATELLITE"    ),{height = 20 , width = 200})
   mainMenu:add_widget(testImage2)
-  mainMenu:add_widget(testImage3)
-  mainMenu:add_widget(spacer96)
-  mainMenu:add_widget(radical.widgets.header(mainMenu, "FORCAST"      ),{height = 20 , width = 200})
-  return calInfo:fit(9999,9999)
+  --mainMenu:add_widget(testImage3)
+  --mainMenu:add_widget(spacer96)
+  --mainMenu:add_widget(radical.widgets.header(mainMenu, "FORCAST"      ),{height = 20 , width = 200})
+  return calInfo:fit(9999,500)
 end
 
 local ib2 = nil
