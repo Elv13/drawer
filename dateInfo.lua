@@ -16,7 +16,7 @@ local beautiful    = require( "beautiful"                )
 
 local capi = { screen = screen , mouse  = mouse  , timer  = timer  }
 
-local module = {}
+local dateModule = {}
 local mainMenu = nil
 
 local month = {"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"}
@@ -79,14 +79,16 @@ local function createDrawer()
       weatherInfo2:set_markup(weatherInfo or "N/A")
     end
   end
-  mytimer2 = capi.timer({ timeout = 2000 })
-  mytimer2:connect_signal("timeout", updateWeater)
-  mytimer2:start()
-  updateWeater()
+  --mytimer2 = capi.timer({ timeout = 2000 })
+  --mytimer2:connect_signal("timeout", updateWeater)
+  --mytimer2:start()
+  --updateWeater()
 
   local timeInfo = wibox.widget.textbox()
+  
+  --AXTODO: move calendar update to function
+  --Calendar stuff
   local calInfo = wibox.widget.textbox()
-
   mytimer = capi.timer({ timeout = 3600 })
   mytimer:connect_signal("timeout", function ()
       local f = io.popen('/usr/bin/cal | sed -r -e "s/(^| )(`date +\\"%d\\"`)($| )/\\1<b><span background=\\"#1577D3\\" foreground=\\"#0A1535\\">\\2<\\/span><\\/b>\\3/"',"r")
@@ -131,12 +133,12 @@ local function createDrawer()
 end
 
 local ib2 = nil
-local function update_date()
+dateModule.update_date_widget=function()
   ib2:set_image(themeutils.draw_underlay(month[tonumber(os.date('%m'))].." "..os.date('%d'),
       {
         bg=beautiful.fg_normal,
         fg=beautiful.bg_alternate,
-  --       height=beautiful.default_height,
+        --       height=beautiful.default_height,
         margins=beautiful.default_height*.2,
         padding=2,
         padding_right=3
@@ -144,12 +146,18 @@ local function update_date()
 end
 
 local function new(screen, args)
+  local camUrl = nil
+  --Arg parsing
+  if args ~= nil then
+    camUrl=args.camUrl
+  end
   local mytextclock = widget.textclock(" %H:%M ")
 
+  --Date widget stuff
   ib2 = wibox.widget.imagebox()
   local mytimer5 = capi.timer({ timeout = 1800 }) -- 30 mins
-  update_date()
-  mytimer5:connect_signal("timeout", update_date)
+  dateModule.update_date_widget()
+  mytimer5:connect_signal("timeout", dateModule.update_date_widget)
   mytimer5:start()
 
 
@@ -159,18 +167,18 @@ local function new(screen, args)
   right_layout:add(ib2)
 
   right_layout:buttons (util.table.join(button({ }, 1, function (geo)
-      if not mainMenu then
-        mainMenu = menu({arrow_type=radical.base.arrow_type.CENTERED})
-        min_width = createDrawer()
-        mainMenu.width = min_width + 2*mainMenu.border_width + 150
-        mainMenu._internal.width = min_width
-      end
-      mainMenu.parent_geometry = geo
-      mainMenu.visible = not mainMenu.visible
-  end)))
-  
+          if not mainMenu then
+            mainMenu = menu({arrow_type=radical.base.arrow_type.CENTERED})
+            min_width = createDrawer()
+            mainMenu.width = min_width + 2*mainMenu.border_width + 150
+            mainMenu._internal.width = min_width
+          end
+          mainMenu.parent_geometry = geo
+          mainMenu.visible = not mainMenu.visible
+        end)))
+
   return right_layout
 end
 
-return setmetatable(module, { __call = function(_, ...) return new(...) end })
+return setmetatable(dateModule, { __call = function(_, ...) return new(...) end })
 -- kate: space-indent on; indent-width 2; replace-tabs on;
