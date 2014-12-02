@@ -41,28 +41,14 @@ local function testFunc()
   return {dateInfo}
 end
 
+
+
 local function createDrawer()
-  local f = io.popen('/usr/bin/cal -h',"r")
-  local someText2 = "<tt><b><i>" .. f:read() .. "</i></b><u>" .. "\n" .. f:read() .. '</u>\n' .. f:read("*all") .. "</tt>"
-  f:close()
-
-  local month = os.date('%m')
-  local year = os.date('%Y')
-
-  --Display the next month
-  if month == '12' then
-    month = 1
-    year = year + 1
-  else
-    month = month + 1
-  end
-
-  f = io.popen('/usr/bin/cal ' .. month .. ' ' .. year ,"r")
-  someText2 = someText2 .. "<tt><b><i>" .. f:read() .. "</i></b><u>" .. "\n" .. f:read() .. '</u>\n' .. f:read("*all") .. "</tt>"
-  f:close()
-
-  util.spawn("/bin/bash -c '"..util.getdir("config") .."/Scripts/curWeather2.sh > /tmp/weather2.txt'")
-
+  local calInfo = wibox.widget.textbox()
+  local timeInfo = wibox.widget.textbox()
+  
+  --Weather stuff
+  --util.spawn("/bin/bash -c '"..util.getdir("config") .."/Scripts/curWeather2.sh > /tmp/weather2.txt'")
   local weatherInfo2 = wibox.widget.textbox()
   function updateWeater()
     local f = io.open('/tmp/weather2.txt',"r")
@@ -83,34 +69,29 @@ local function createDrawer()
   --mytimer2:connect_signal("timeout", updateWeater)
   --mytimer2:start()
   --updateWeater()
-
-  local timeInfo = wibox.widget.textbox()
   
-  --AXTODO: move calendar update to function
+  function updateCalendar()
+    local f = io.popen('/usr/bin/cal -h',"r")
+    local someText3 = "<tt><b><i>" .. f:read() .. "</i></b><u>" .. "\n" .. f:read() .. '</u>\n' .. f:read("*all") .. "</tt>"
+    f:close()
+    local month = os.date('%m')
+    local year = os.date('%Y')
+    --Display the next month
+    if month == '12' then
+      month = 1
+      year = year + 1
+    else
+      month = month + 1
+    end
+    f = io.popen('/usr/bin/cal ' .. month .. ' ' .. year ,"r")
+    someText3 = someText3 .. "<tt><b><i>" .. f:read() .. "</i></b><u>" .. "\n" .. f:read() .. '</u>\n' .. f:read("*all") .. "</tt>"
+    f:close()
+    calInfo:set_markup(someText3)
+  end
+  
   --Calendar stuff
-  local calInfo = wibox.widget.textbox()
-  mytimer = capi.timer({ timeout = 3600 })
-  mytimer:connect_signal("timeout", function ()
-      local f = io.popen('/usr/bin/cal | sed -r -e "s/(^| )(`date +\\"%d\\"`)($| )/\\1<b><span background=\\"#1577D3\\" foreground=\\"#0A1535\\">\\2<\\/span><\\/b>\\3/"',"r")
-      local someText3 = "<tt><b><i>" .. f:read() .. "</i></b><u>" .. "\n" .. f:read() .. '</u>\n' .. f:read("*all") .. "</tt>"
-      f:close()
-      local month = os.date('%m')
-      local year = os.date('%Y')
-      --Display the next month
-      if month == '12' then
-        month = 1
-        year = year + 1
-      else
-        month = month + 1
-      end
-      f = io.popen('/usr/bin/cal ' .. month .. ' ' .. year ,"r")
-      someText3 = someText3 .. "<tt><b><i>" .. f:read() .. "</i></b><u>" .. "\n" .. f:read() .. '</u>\n' .. f:read("*all") .. "</tt>"
-      f:close()
-      calInfo:set_markup(someText3)
-    end)
-  mytimer:start()
 
-  calInfo:set_markup(someText2)
+  updateCalendar()
   local testImage2       = wibox.widget.imagebox()
   local testImage3                       = wibox.widget.imagebox()
   testImage2:set_image("/tmp/cam.jpg")
