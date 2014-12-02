@@ -74,6 +74,10 @@ local function createDrawer()
     local f = io.popen('/usr/bin/cal -h',"r")
     local someText3 = "<tt><b><i>" .. f:read() .. "</i></b><u>" .. "\n" .. f:read() .. '</u>\n' .. f:read("*all") .. "</tt>"
     f:close()
+    local day = tonumber(os.date('%d'))
+    someText3 = someText3:gsub("%D"..day.."%D","<b><u>"..day.."</u></b>")
+    print("DAY",tonumber(os.date('%d')))
+    print("TXT:", someText3)
     local month = os.date('%m')
     local year = os.date('%Y')
     --Display the next month
@@ -110,9 +114,10 @@ local function createDrawer()
   --mainMenu:add_widget(testImage3)
   --mainMenu:add_widget(spacer96)
   --mainMenu:add_widget(radical.widgets.header(mainMenu, "FORCAST"      ),{height = 20 , width = 200})
-  return calInfo:fit(9999,500)
+  return calInfo:fit(9999,9999)
 end
 
+--Widget stuff
 local ib2 = nil
 dateModule.update_date_widget=function()
   ib2:set_image(themeutils.draw_underlay(month[tonumber(os.date('%m'))].." "..os.date('%d'),
