@@ -18,7 +18,6 @@ local capi = { screen = screen , mouse  = mouse  , timer  = timer  }
 
 local dateModule = {}
 local mainMenu = nil
-local camImage = nil
 local month = {"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"}
 
 local function getHour(input)
@@ -76,8 +75,6 @@ local function createDrawer()
     f:close()
     local day = tonumber(os.date('%d'))
     someText3 = someText3:gsub("%D"..day.."%D","<b><u>"..day.."</u></b>")
-    print("DAY",tonumber(os.date('%d')))
-    print("TXT:", someText3)
     local month = os.date('%m')
     local year = os.date('%Y')
     --Display the next month
@@ -96,7 +93,7 @@ local function createDrawer()
   --Calendar stuff
 
   updateCalendar()
-  camImage       = wibox.widget.imagebox()
+  local camImage       = wibox.widget.imagebox()
   --local testImage3                       = wibox.widget.imagebox()
   camImage:set_image("/tmp/cam")
 
@@ -144,29 +141,31 @@ local function new(screen, args)
   --Functions-------------------------------------------------
   --Toggles date menu and returns visibility
   dateModule.toggle = function (geo)
-    if not mainMenu then
+    if not  mainMenu then
       mainMenu = menu({arrow_type=radical.base.arrow_type.CENTERED})
       min_width = createDrawer()
       mainMenu.width = min_width + 2*mainMenu.border_width + 150
       mainMenu._internal.width = min_width
-    end
-    if geo then
-      mainMenu.parent_geometry = geo
+
+      if geo then
+        mainMenu.parent_geometry = geo
+      end
+
+      mainMenu.visible = true
+      return true
+    else
+      mainMenu.visible = false
+      mainMenu=nil
+      return false
     end
 
-    if not mainMenu.visible then
-      camImage:set_image("/tmp/cam")
-    end
-    mainMenu.visible = not mainMenu.visible
-
-    return mainMenu.visible
   end
 
   --Constructor---------------------------------------------
   if camUrl then
     --Download new image every camTimeout
     local timerCam = capi.timer({ timeout = camTimeout })
-    timerCam:connect_signal("timeout", function() print("wget -q "..camUrl.." /tmp/cam") end)
+    timerCam:connect_signal("timeout", function() util.spawn_with_shell("wget -q "..camUrl.." -O /tmp/cam") end)
     timerCam:start()
   end
 
