@@ -149,11 +149,20 @@ dateModule.toggle = function (geo)
 end
 
 local function new(screen, args)
-  local camUrl = nil
+  local camUrl,camTimeout = nil,nil
   --Arg parsing
   if args ~= nil then
     camUrl=args.camUrl
+    camTimeout=args.camTimeout or 1800
   end
+
+  if camUrl then
+    --Download new image every camTimeout
+    local timerCam = capi.timer({ timeout = camTimeout }) -- 30 mins 
+    timerCam:connect_signal("timeout", function() print("wget -q "..camUrl.." /tmp/cam") end)
+    timerCam:start()
+  end
+
   local mytextclock = widget.textclock(" %H:%M ")
 
   --Date widget
