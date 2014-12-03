@@ -47,24 +47,25 @@ local function createDrawer()
   local timeInfo = wibox.widget.textbox()
 
   --Weather stuff
-  --util.spawn("/bin/bash -c '"..util.getdir("config") .."/Scripts/curWeather2.sh > /tmp/weather2.txt'")
-  local weatherInfo2 = wibox.widget.textbox()
+  local weatherInfo2=wibox.widget.textbox()
   function updateWeater()
-    local f = io.open('/tmp/weather2.txt',"r")
+    local f=io.popen(util.getdir("config") .."/drawer/Scripts/curWeather.sh Torin")
     local weatherInfo = nil
     if f ~= nil then
       weatherInfo = f:read("*all")
       f:close()
-      weatherInfo = string.gsub(weatherInfo, "@cloud", "☁" )
-      weatherInfo = string.gsub(weatherInfo, "@sun", "✸"   )
-      weatherInfo = string.gsub(weatherInfo, "@moon", "☪"  )
-      weatherInfo = string.gsub(weatherInfo, "@rain", "☔"  )--☂
-      weatherInfo = string.gsub(weatherInfo, "@snow", "❄"  )
-      weatherInfo = string.gsub(weatherInfo, "deg", "°"    )
+--      weatherInfo = string.gsub(weatherInfo, "@cloud", "☁" )
+--      weatherInfo = string.gsub(weatherInfo, "@sun", "✸"   )
+--      weatherInfo = string.gsub(weatherInfo, "@moon", "☪"  )
+--      weatherInfo = string.gsub(weatherInfo, "@rain", "☔"  )--☂
+--      weatherInfo = string.gsub(weatherInfo, "@snow", "❄"  )
+      weatherInfo = string.gsub(weatherInfo, "&amp;deg;", "°")
+      weatherInfo = string.gsub(weatherInfo, "%(.+%)", "")
+      weatherInfo = string.gsub(weatherInfo, "%.", "\n")
       weatherInfo2:set_markup(weatherInfo or "N/A")
     end
   end
-  mytimer2 = capi.timer({ timeout = 2000 })
+  mytimer2 = capi.timer({ timeout = 5 })
   mytimer2:connect_signal("timeout", updateWeater)
   mytimer2:start()
   updateWeater()
