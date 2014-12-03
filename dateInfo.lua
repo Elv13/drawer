@@ -46,7 +46,7 @@ end
 local function createDrawer()
   local calInfo = wibox.widget.textbox()
   local timeInfo = wibox.widget.textbox()
-  
+
   --Weather stuff
   --util.spawn("/bin/bash -c '"..util.getdir("config") .."/Scripts/curWeather2.sh > /tmp/weather2.txt'")
   local weatherInfo2 = wibox.widget.textbox()
@@ -69,7 +69,7 @@ local function createDrawer()
   --mytimer2:connect_signal("timeout", updateWeater)
   --mytimer2:start()
   --updateWeater()
-  
+
   function updateCalendar()
     local f = io.popen('/usr/bin/cal -h',"r")
     local someText3 = "<tt><b><i>" .. f:read() .. "</i></b><u>" .. "\n" .. f:read() .. '</u>\n' .. f:read("*all") .. "</tt>"
@@ -92,7 +92,7 @@ local function createDrawer()
     f:close()
     calInfo:set_markup(someText3)
   end
-  
+
   --Calendar stuff
 
   updateCalendar()
@@ -131,6 +131,22 @@ dateModule.update_date_widget=function()
       }))
 end
 
+--Toggles date menu and returns visibility
+dateModule.toggle = function (geo)
+  if not mainMenu then
+    mainMenu = menu({arrow_type=radical.base.arrow_type.CENTERED})
+    min_width = createDrawer()
+    mainMenu.width = min_width + 2*mainMenu.border_width + 150
+    mainMenu._internal.width = min_width
+  end
+  if geo then
+    mainMenu.parent_geometry = geo
+  end
+  mainMenu.visible = not mainMenu.visible
+
+  return mainMenu.visible
+end
+
 local function new(screen, args)
   local camUrl = nil
   --Arg parsing
@@ -139,7 +155,7 @@ local function new(screen, args)
   end
   local mytextclock = widget.textclock(" %H:%M ")
 
-  --Date widget stuff
+  --Date widget
   ib2 = wibox.widget.imagebox()
   local mytimer5 = capi.timer({ timeout = 1800 }) -- 30 mins
   dateModule.update_date_widget()
@@ -152,16 +168,7 @@ local function new(screen, args)
   right_layout:add(mytextclock)
   right_layout:add(ib2)
 
-  right_layout:buttons (util.table.join(button({ }, 1, function (geo)
-          if not mainMenu then
-            mainMenu = menu({arrow_type=radical.base.arrow_type.CENTERED})
-            min_width = createDrawer()
-            mainMenu.width = min_width + 2*mainMenu.border_width + 150
-            mainMenu._internal.width = min_width
-          end
-          mainMenu.parent_geometry = geo
-          mainMenu.visible = not mainMenu.visible
-        end)))
+  right_layout:buttons (util.table.join(button({ }, 1, dateModule.toggle )))
 
   return right_layout
 end
