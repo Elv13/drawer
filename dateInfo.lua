@@ -18,7 +18,7 @@ local capi = { screen = screen , mouse  = mouse  , timer  = timer  }
 
 local dateModule = {}
 local mainMenu = nil
-
+local camImage = nil
 local month = {"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"}
 
 local function getHour(input)
@@ -96,9 +96,9 @@ local function createDrawer()
   --Calendar stuff
 
   updateCalendar()
-  local testImage2       = wibox.widget.imagebox()
-  local testImage3                       = wibox.widget.imagebox()
-  testImage2:set_image("/tmp/cam")
+  camImage       = wibox.widget.imagebox()
+  --local testImage3                       = wibox.widget.imagebox()
+  camImage:set_image("/tmp/cam")
 
   --local spacer96                   = wibox.widget.textbox()
   --spacer96:set_text("\n\n")
@@ -110,7 +110,7 @@ local function createDrawer()
   mainMenu:add_widget(radical.widgets.header(mainMenu, "INTERNATIONAL"),{height = 20 , width = 200})
   mainMenu:add_widget(timeInfo)
   mainMenu:add_widget(radical.widgets.header(mainMenu, "SATELLITE"    ),{height = 20 , width = 200})
-  mainMenu:add_widget(testImage2)
+  mainMenu:add_widget(camImage)
   mainMenu:add_widget(weatherInfo2)
   --mainMenu:add_widget(testImage3)
   --mainMenu:add_widget(spacer96)
@@ -132,21 +132,7 @@ dateModule.update_date_widget=function()
       }))
 end
 
---Toggles date menu and returns visibility
-dateModule.toggle = function (geo)
-  if not mainMenu then
-    mainMenu = menu({arrow_type=radical.base.arrow_type.CENTERED})
-    min_width = createDrawer()
-    mainMenu.width = min_width + 2*mainMenu.border_width + 150
-    mainMenu._internal.width = min_width
-  end
-  if geo then
-    mainMenu.parent_geometry = geo
-  end
-  mainMenu.visible = not mainMenu.visible
 
-  return mainMenu.visible
-end
 
 local function new(screen, args)
   local camUrl,camTimeout = nil,nil
@@ -156,9 +142,31 @@ local function new(screen, args)
     camTimeout=args.camTimeout or 1800
   end
 
+  --Functions-------------------------------------------------
+  --Toggles date menu and returns visibility
+  dateModule.toggle = function (geo)
+    if not mainMenu then
+      mainMenu = menu({arrow_type=radical.base.arrow_type.CENTERED})
+      min_width = createDrawer()
+      mainMenu.width = min_width + 2*mainMenu.border_width + 150
+      mainMenu._internal.width = min_width
+    end
+    if geo then
+      mainMenu.parent_geometry = geo
+    end
+
+    if not mainMenu.visible then
+      camImage:set_image("/tmp/cam")
+    end
+    mainMenu.visible = not mainMenu.visible
+
+    return mainMenu.visible
+  end
+
+  --Constructor---------------------------------------------
   if camUrl then
     --Download new image every camTimeout
-    local timerCam = capi.timer({ timeout = camTimeout }) -- 30 mins 
+    local timerCam = capi.timer({ timeout = camTimeout })
     timerCam:connect_signal("timeout", function() print("wget -q "..camUrl.." /tmp/cam") end)
     timerCam:start()
   end
