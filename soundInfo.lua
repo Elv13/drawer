@@ -161,7 +161,7 @@ local function new(mywibox3,args)
         end
         -- Menu drawer for pulseaudio
         moduleSound.drawMenu=function()
-            local mainMenu,aVolume,data,isMte
+            local mainMenu,aVolume,data,isMute
             mainMenu=  radical.context({width=300,arrow_type=radical.base.arrow_type.CENTERED})
             --Add header
             mainMenu:add_widget(radical.widgets.header(aMenu,"CHANNEL")  , {height = 20  , width = 200})
