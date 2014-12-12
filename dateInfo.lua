@@ -49,7 +49,7 @@ local function createDrawer()
   --Weather stuff
   local weatherInfo2=wibox.widget.textbox()
   function updateWeater()
-    local f=io.popen(util.getdir("config") .."/drawer/Scripts/curWeather.sh Torin")
+    local f=io.popen(util.getdir("config") .."/drawer/Scripts/curWeather.sh Torino")
     local weatherInfo = nil
     if f ~= nil then
       weatherInfo = f:read("*all")
