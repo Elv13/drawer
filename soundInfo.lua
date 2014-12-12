@@ -161,15 +161,16 @@ local function new(mywibox3,args)
         end
         -- Menu drawer for pulseaudio
         moduleSound.drawMenu=function()
-            local mainMenu=  radical.context({width=300,arrow_type=radical.base.arrow_type.CENTERED})
+            local mainMenu,aVolume,data,isMte
+            mainMenu=  radical.context({width=300,arrow_type=radical.base.arrow_type.CENTERED})
             --Add header
             mainMenu:add_widget(radical.widgets.header(aMenu,"CHANNEL")  , {height = 20  , width = 200})
             --Parse pactl stuff
             local pipe=io.popen("pactl list | awk -f "..util.getdir("config").."/drawer/Scripts/parsePactl.awk")
             for line in pipe:lines() do
-                local data=string.split(line,";")
-                local aVolume=tonumber(data[3]:match("%d+"))/100
-                local isMute = false
+                data=string.split(line,";")
+                aVolume=tonumber(data[3]:match("%d+") or 0)/100
+                isMute = false
                 if data[4]:match("yes") then isMute=true end
                 --Add item to menu
                 addVolumeDevice(mainMenu,data[5],aVolume,isMute,{type=data[1],id=data[2]})
