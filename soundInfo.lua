@@ -169,11 +169,13 @@ local function new(mywibox3,args)
             local pipe=io.popen("pactl list | awk -f "..util.getdir("config").."/drawer/Scripts/parsePactl.awk")
             for line in pipe:lines() do
                 data=string.split(line,";")
-                aVolume=tonumber(data[3]:match("%d+") or 0)/100
-                isMute = false
-                if data[4]:match("yes") then isMute=true end
-                --Add item to menu
-                addVolumeDevice(mainMenu,data[5],aVolume,isMute,{type=data[1],id=data[2]})
+                if #data>=5 then
+                    aVolume=tonumber(data[3]:match("%d+") or 0)/100
+                    isMute = false
+                    if data[4]:match("yes") then isMute=true end
+                    --Add item to menu
+                    addVolumeDevice(mainMenu,data[5],aVolume,isMute,{type=data[1],id=data[2]})
+                end
             end
             pipe:close()
 
