@@ -40,7 +40,14 @@ local function testFunc()
   return {dateInfo}
 end
 
-
+local function getPosition()
+  local pipe=io.popen("curl -s http://whatismycountry.com/ | awk '/<h3>/'")
+  local buffer=pipe:read("*a")
+  pipe:close()
+  
+  _, _, city, country = string.find(buffer, "(%a+),(%a+)")
+  print(city, country)
+  end
 
 local function createDrawer()
   local calInfo = wibox.widget.textbox()
@@ -168,6 +175,11 @@ local function new(screen, args)
     local timerCam = capi.timer({ timeout = camTimeout })
     timerCam:connect_signal("timeout", function() util.spawn_with_shell("wget -q "..camUrl.." -O /tmp/cam") end)
     timerCam:start()
+    
+    --Update position every 30 minutes
+    local timerPosition = capi.timer({ timeout = 1 })
+    timerPosition:connect_signal("timeout", getPosition)
+    timerPosition:start()
   end
 
   local mytextclock = widget.textclock(" %H:%M ")
