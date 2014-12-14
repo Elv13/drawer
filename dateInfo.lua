@@ -41,6 +41,7 @@ local function testFunc()
 end
 
 local function createDrawer()
+  print("CREATE DRAWER")
   local calInfo = wibox.widget.textbox()
   local timeInfo = wibox.widget.textbox()
 
@@ -51,20 +52,14 @@ local function createDrawer()
       local f=io.popen("curl -S 'http://api.openweathermap.org/data/2.5/weather?lat="..dateModule.latitude.."&lon="..dateModule.longitude.."'")
       local weatherInfo = nil
       if f ~= nil then
-        weatherInfo = f:read("*all")
+        local wData=json:decode(f:read("*all"))
         f:close()
-        --weatherInfo = string.gsub(weatherInfo, "&amp;deg;", "°")
-        --weatherInfo = string.gsub(weatherInfo, "%(.+%)", "")
-        --weatherInfo = string.gsub(weatherInfo, "%.", "\n")
-        --weatherInfo2:set_markup(weatherInfo or "N/A")
-        _, _, country= string.find(weatherInfo, "\"country\":\"(%a+)\"")
-        _, _, weather= string.find(weatherInfo, "\"description\":\"(.-)\"")
-        _, _, temp= string.find(weatherInfo, "\"temp\":([0-9.]+),")
-        _, _, pressure= string.find(weatherInfo, "\"pressure\":([0-9.]+),")
-        _, _, humidity= string.find(weatherInfo, "\"humidity\":([0-9.]+),")
-        _, _, windSpeed,windDirection= string.find(weatherInfo, "\"wind\":{\"speed\":([0-9.]+),\"deg\":([0-9.]+)")
+        weatherInfo=" "..wData.name..", "..wData.sys.country.."\n"
+        weatherInfo=weatherInfo.."  <b>Temp:</b> "..(wData.main.temp-273.15).." °C\n"
+        weatherInfo=weatherInfo.."  <b>Wind:</b> "..(wData.wind.speed).." m/s\n"
+        weatherInfo=weatherInfo.."  <b>Humidity:</b> "..(wData.main.humidity).." hPa"
 
-        print("WI:",country,weather,temp,pressure,humidity,windSpeed,windDirection)
+        weatherInfo2:set_markup(weatherInfo or "N/A")
       end
     end
   end
@@ -179,7 +174,8 @@ local function new(screen, args)
       min_width = createDrawer()
       mainMenu.width = min_width + 2*mainMenu.border_width + 150
       mainMenu._internal.width = min_width
-
+    end
+    if not mainMenu.visible then
       if geo then
         mainMenu.parent_geometry = geo
       end
