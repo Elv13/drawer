@@ -52,11 +52,6 @@ local function createDrawer()
     if f ~= nil then
       weatherInfo = f:read("*all")
       f:close()
-      --      weatherInfo = string.gsub(weatherInfo, "@cloud", "☁" )
-      --      weatherInfo = string.gsub(weatherInfo, "@sun", "✸"   )
-      --      weatherInfo = string.gsub(weatherInfo, "@moon", "☪"  )
-      --      weatherInfo = string.gsub(weatherInfo, "@rain", "☔"  )--☂
-      --      weatherInfo = string.gsub(weatherInfo, "@snow", "❄"  )
       weatherInfo = string.gsub(weatherInfo, "&amp;deg;", "°")
       weatherInfo = string.gsub(weatherInfo, "%(.+%)", "")
       weatherInfo = string.gsub(weatherInfo, "%.", "\n")
