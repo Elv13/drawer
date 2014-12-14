@@ -20,9 +20,6 @@ local dateModule = {}
 local mainMenu = nil
 local month = {"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"}
 
---Location variables
-local city,country,mapUrl
-
 local function getHour(input)
   local toReturn
   if input < 0 then
@@ -41,19 +38,6 @@ local function testFunc()
   dateInfo=pipe:read("*a")
   pipe:close()
   return {dateInfo}
-end
-
-local function getPosition()
-  local pipe=io.popen("curl -s http://whatismycountry.com/ | awk '/<h3>/;/Location/'")
-  local buffer=pipe:read("*a")
-  pipe:close()
-
-  _, _, city, country = string.find(buffer, "(%a+),(%a+)")
-  _, _, mapUrl = string.find(buffer, "src=\"(%S+)\"[^<>]+Location")
-
-  util.spawn_with_shell("wget -q \""..mapUrl.."\" -O /tmp/dateInfo.map")
-  print(city, country,mapUrl)
-
 end
 
 local function createDrawer()
@@ -147,6 +131,9 @@ end
 
 
 local function new(screen, args)
+  --Location variables
+  dateModule.city,dateModule.country,dateModule.mapUrl = nil,nil,nil
+  --Cam variables
   local camUrl,camTimeout = nil,nil
   --Arg parsing
   if args ~= nil then
@@ -155,6 +142,29 @@ local function new(screen, args)
   end
 
   --Functions-------------------------------------------------
+  --Private-------------
+  local function getPosition()
+    local pipe=io.popen("curl -s http://whatismycountry.com/ | awk '/<h3>/;/Location/'")
+    local buffer=pipe:read("*a")
+    pipe:close()
+
+    _, _, city, country = string.find(buffer, "(%a+),(%a+)")
+    _, _, mapUrl = string.find(buffer, "src=\"(%S+)\"[^<>]+Location")
+
+    print(city, country,mapUrl)
+
+    if mapUrl ~= nil then
+      util.spawn_with_shell("wget -q \""..mapUrl.."\" -O /tmp/dateInfo.map")
+    end
+
+    --Save country and city
+    if dateModule.city ~= nil and dateModule.country ~= nil then
+      dateModule.city=city
+      dateModule.country=country
+    end
+
+  end
+  --Public--------------
   --Toggles date menu and returns visibility
   dateModule.toggle = function (geo)
     if not  mainMenu then
@@ -184,7 +194,8 @@ local function new(screen, args)
     timerCam:connect_signal("timeout", function() util.spawn_with_shell("wget -q "..camUrl.." -O /tmp/cam") end)
     timerCam:start()
   end
-  --Update position every 30 minutes
+  --Check for position every 60 minutes 
+  --AXTODO: set to 60 minutes
   local timerPosition = capi.timer({ timeout = 60 })
   timerPosition:connect_signal("timeout", getPosition)
   timerPosition:start()
