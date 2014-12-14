@@ -1,11 +1,9 @@
 *Add Icon in program
+*Shared info
 memInfo
-
 cpuInfo
 	*Check graph data
 	*Extended governor Name
 netInfo
 	*Local lookup
 dateInfo
-	*Add weather webcam
-	*Timezones selection by arguments

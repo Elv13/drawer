@@ -198,7 +198,6 @@ local function new(screen, args)
     timerCam:start()
   end
   --Check for position every 60 minutes 
-  --AXTODO: set to 60 minutes
   local timerPosition = capi.timer({ timeout = 3600 })
   timerPosition:connect_signal("timeout", getPosition)
   timerPosition:start()
