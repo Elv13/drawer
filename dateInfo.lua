@@ -13,7 +13,7 @@ local widget       = require( "awful.widget"             )
 local themeutils   = require( "blind.common.drawing"     )
 local radical      = require( "radical"                  )
 local beautiful    = require( "beautiful"                )
-
+local json         = require( "drawer.JSON"              )
 local capi = { screen = screen , mouse  = mouse  , timer  = timer  }
 
 local dateModule = {}
@@ -47,15 +47,25 @@ local function createDrawer()
   --Weather stuff
   local weatherInfo2=wibox.widget.textbox()
   function updateWeater()
-    local f=io.popen(util.getdir("config") .."/drawer/Scripts/curWeather.sh Torino")
-    local weatherInfo = nil
-    if f ~= nil then
-      weatherInfo = f:read("*all")
-      f:close()
-      weatherInfo = string.gsub(weatherInfo, "&amp;deg;", "°")
-      weatherInfo = string.gsub(weatherInfo, "%(.+%)", "")
-      weatherInfo = string.gsub(weatherInfo, "%.", "\n")
-      weatherInfo2:set_markup(weatherInfo or "N/A")
+    if dateModule.latitude ~= nil and dateModule.longitude ~= nil then
+      local f=io.popen("curl -S 'http://api.openweathermap.org/data/2.5/weather?lat="..dateModule.latitude.."&lon="..dateModule.longitude.."'")
+      local weatherInfo = nil
+      if f ~= nil then
+        weatherInfo = f:read("*all")
+        f:close()
+        --weatherInfo = string.gsub(weatherInfo, "&amp;deg;", "°")
+        --weatherInfo = string.gsub(weatherInfo, "%(.+%)", "")
+        --weatherInfo = string.gsub(weatherInfo, "%.", "\n")
+        --weatherInfo2:set_markup(weatherInfo or "N/A")
+        _, _, country= string.find(weatherInfo, "\"country\":\"(%a+)\"")
+        _, _, weather= string.find(weatherInfo, "\"description\":\"(.-)\"")
+        _, _, temp= string.find(weatherInfo, "\"temp\":([0-9.]+),")
+        _, _, pressure= string.find(weatherInfo, "\"pressure\":([0-9.]+),")
+        _, _, humidity= string.find(weatherInfo, "\"humidity\":([0-9.]+),")
+        _, _, windSpeed,windDirection= string.find(weatherInfo, "\"wind\":{\"speed\":([0-9.]+),\"deg\":([0-9.]+)")
+
+        print("WI:",country,weather,temp,pressure,humidity,windSpeed,windDirection)
+      end
     end
   end
   mytimer2 = capi.timer({ timeout = 1800 })
@@ -139,24 +149,26 @@ local function new(screen, args)
   --Functions-------------------------------------------------
   --Private-------------
   local function getPosition()
-    local pipe=io.popen("curl -s http://whatismycountry.com/ | awk '/<h3>/;/Location/'")
+    local pipe=io.popen("curl -s http://whatismycountry.com/ | awk '/<h3>/;/Location/;/Coordinates/'")
     local buffer=pipe:read("*a")
     pipe:close()
 
     _, _, city, country = string.find(buffer, "(%a+),(%a+)")
+    _, _, latitude,longitude = string.find(buffer, "Coordinates ([0-9.]+)%s+([0-9.]+)")
     _, _, mapUrl = string.find(buffer, "src=\"(%S+)\"[^<>]+Location")
 
-    print(city, country,mapUrl)
+    --print(city, country,latitude,longitude,mapUrl)
 
+    --Save map image
     if mapUrl ~= nil then
-      util.spawn_with_shell("wget -q \""..mapUrl.."\" -O /tmp/dateInfo.map")
+      util.spawn_with_shell("wget -q \""..mapUrl.."\" -O /tmp/dateInfo.map > /dev/null")
     end
 
-    --Save country and city
-    if dateModule.city ~= nil and dateModule.country ~= nil then
-      dateModule.city=city
-      dateModule.country=country
-    end
+    --Save Position
+    dateModule.latitude=latitude or dateModule.latitude
+    dateModule.longitude=longitude or dateModule.longitude
+    dateModule.city=city or dateModule.city
+    dateModule.country=country or dateModule.country
 
   end
   --Public--------------
@@ -191,7 +203,7 @@ local function new(screen, args)
   end
   --Check for position every 60 minutes 
   --AXTODO: set to 60 minutes
-  local timerPosition = capi.timer({ timeout = 60 })
+  local timerPosition = capi.timer({ timeout = 3600 })
   timerPosition:connect_signal("timeout", getPosition)
   timerPosition:start()
   getPosition()
