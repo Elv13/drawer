@@ -20,6 +20,9 @@ local dateModule = {}
 local mainMenu = nil
 local month = {"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"}
 
+--Location variables
+local city,country,mapUrl
+
 local function getHour(input)
   local toReturn
   if input < 0 then
@@ -41,13 +44,17 @@ local function testFunc()
 end
 
 local function getPosition()
-  local pipe=io.popen("curl -s http://whatismycountry.com/ | awk '/<h3>/'")
+  local pipe=io.popen("curl -s http://whatismycountry.com/ | awk '/<h3>/;/Location/'")
   local buffer=pipe:read("*a")
   pipe:close()
-  
+
   _, _, city, country = string.find(buffer, "(%a+),(%a+)")
-  print(city, country)
-  end
+  _, _, mapUrl = string.find(buffer, "src=\"(%S+)\"[^<>]+Location")
+
+  util.spawn_with_shell("wget -q \""..mapUrl.."\" -O /tmp/dateInfo.map")
+  print(city, country,mapUrl)
+
+end
 
 local function createDrawer()
   local calInfo = wibox.widget.textbox()
@@ -61,18 +68,18 @@ local function createDrawer()
     if f ~= nil then
       weatherInfo = f:read("*all")
       f:close()
---      weatherInfo = string.gsub(weatherInfo, "@cloud", "☁" )
---      weatherInfo = string.gsub(weatherInfo, "@sun", "✸"   )
---      weatherInfo = string.gsub(weatherInfo, "@moon", "☪"  )
---      weatherInfo = string.gsub(weatherInfo, "@rain", "☔"  )--☂
---      weatherInfo = string.gsub(weatherInfo, "@snow", "❄"  )
+      --      weatherInfo = string.gsub(weatherInfo, "@cloud", "☁" )
+      --      weatherInfo = string.gsub(weatherInfo, "@sun", "✸"   )
+      --      weatherInfo = string.gsub(weatherInfo, "@moon", "☪"  )
+      --      weatherInfo = string.gsub(weatherInfo, "@rain", "☔"  )--☂
+      --      weatherInfo = string.gsub(weatherInfo, "@snow", "❄"  )
       weatherInfo = string.gsub(weatherInfo, "&amp;deg;", "°")
       weatherInfo = string.gsub(weatherInfo, "%(.+%)", "")
       weatherInfo = string.gsub(weatherInfo, "%.", "\n")
       weatherInfo2:set_markup(weatherInfo or "N/A")
     end
   end
-  mytimer2 = capi.timer({ timeout = 5 })
+  mytimer2 = capi.timer({ timeout = 1800 })
   mytimer2:connect_signal("timeout", updateWeater)
   mytimer2:start()
   updateWeater()
@@ -102,8 +109,9 @@ local function createDrawer()
 
   updateCalendar()
   local camImage       = wibox.widget.imagebox()
-  --local testImage3                       = wibox.widget.imagebox()
+  local testImage3     = wibox.widget.imagebox()
   camImage:set_image("/tmp/cam")
+  testImage3:set_image("/tmp/dateInfo.map")
 
   --local spacer96                   = wibox.widget.textbox()
   --spacer96:set_text("\n\n")
@@ -114,10 +122,10 @@ local function createDrawer()
   mainMenu:add_widget(calInfo)
   mainMenu:add_widget(radical.widgets.header(mainMenu, "INTERNATIONAL"),{height = 20 , width = 200})
   mainMenu:add_widget(timeInfo)
-  mainMenu:add_widget(radical.widgets.header(mainMenu, "SATELLITE"    ),{height = 20 , width = 200})
+  mainMenu:add_widget(radical.widgets.header(mainMenu, "CAM"    ),{height = 20 , width = 200})
   mainMenu:add_widget(camImage)
-  --mainMenu:add_widget(testImage3)
-  --mainMenu:add_widget(spacer96)
+  mainMenu:add_widget(radical.widgets.header(mainMenu, "MAP"    ),{height = 20 , width = 200})
+  mainMenu:add_widget(testImage3)
   --mainMenu:add_widget(radical.widgets.header(mainMenu, "FORCAST"      ),{height = 20 , width = 200})
   return calInfo:fit(9999,9999)
 end
@@ -175,12 +183,12 @@ local function new(screen, args)
     local timerCam = capi.timer({ timeout = camTimeout })
     timerCam:connect_signal("timeout", function() util.spawn_with_shell("wget -q "..camUrl.." -O /tmp/cam") end)
     timerCam:start()
-    
-    --Update position every 30 minutes
-    local timerPosition = capi.timer({ timeout = 1 })
-    timerPosition:connect_signal("timeout", getPosition)
-    timerPosition:start()
   end
+  --Update position every 30 minutes
+  local timerPosition = capi.timer({ timeout = 60 })
+  timerPosition:connect_signal("timeout", getPosition)
+  timerPosition:start()
+  getPosition()
 
   local mytextclock = widget.textclock(" %H:%M ")
 
