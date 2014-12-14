@@ -75,7 +75,7 @@ local function createDrawer()
     local someText3 = "<tt><b><i>" .. f:read() .. "</i></b><u>" .. "\n" .. f:read() .. '</u>\n' .. f:read("*all") .. "</tt>"
     f:close()
     local day = tonumber(os.date('%d'))
-    someText3 = someText3:gsub("%D"..day.."%D","<b><u>"..day.."</u></b>")
+    someText3 = someText3:gsub("(%D)"..day.."(%D)","%1<b><u>"..day.."</u></b>%2")
     local month = os.date('%m')
     local year = os.date('%Y')
     --Display the next month
