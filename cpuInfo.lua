@@ -138,6 +138,8 @@ local function new(margin, args)
             })
         main_table = widgets
 
+        --Single core load
+        
         --Register cell table as vicious widgets
         for i=0, (data.coreN-1) do
             --Cpu Speed (Frequency in Ghz
@@ -145,7 +147,7 @@ local function new(margin, args)
                     return string.format("%.2f", args['{cpu'..i..' ghz}'])
                 end,2)
             --Usage
-            vicious.register(main_table[i+1][2], vicious.widgets.cpu,'$'..(i+2)..' %',1)
+            vicious.register(main_table[i+1][2], vicious.widgets.cpu,'$2',2)
             --Governor
             vicious.register(main_table[i+1][4], vicious.widgets.cpufreq,'$5',5,"cpu"..i)
         end
@@ -172,7 +174,7 @@ local function new(margin, args)
         volUsage:set_scale        ( true                                 )
         volUsage:set_border_color ( beautiful.fg_normal                  )
         volUsage:set_color        ( beautiful.fg_normal                  )
-        vicious.register          ( volUsage, vicious.widgets.cpu,'$1',1 )
+        vicious.register          ( volUsage, vicious.widgets.cpu,'$1',3 )
 
 
     end
