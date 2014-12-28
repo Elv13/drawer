@@ -2,8 +2,11 @@
 *Shared info
 memInfo
 cpuInfo
-	*Check graph data
+	*Single cpu data update function for total, single core, and graph
 	*Extended governor Name
 netInfo
+	*check Online
+	*public amIOnline function
 	*Local lookup
 dateInfo
+	*Hide cam and map section if none available
