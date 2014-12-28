@@ -134,12 +134,12 @@ local function new(margin, args)
         end
         local tab,widgets = radtab(emptyTable,
             {row_height=20,v_header = tabHeader,
-                h_header = {"GHz","Used","Temp","Governor"}
+                h_header = {"GHz","Used %","Temp","Governor"}
             })
         main_table = widgets
 
         --Single core load
-        
+
         --Register cell table as vicious widgets
         for i=0, (data.coreN-1) do
             --Cpu Speed (Frequency in Ghz
@@ -147,7 +147,7 @@ local function new(margin, args)
                     return string.format("%.2f", args['{cpu'..i..' ghz}'])
                 end,2)
             --Usage
-            vicious.register(main_table[i+1][2], vicious.widgets.cpu,'$2',2)
+            --vicious.register(main_table[i+1][2], vicious.widgets.cpu,'$2',2)
             --Governor
             vicious.register(main_table[i+1][4], vicious.widgets.cpufreq,'$5',5,"cpu"..i)
         end
@@ -217,7 +217,7 @@ local function new(margin, args)
         local govLabel
         if cpuN ~= nil then govLabel="Set Cpu"..cpuN.." Governor"
         else govLabel="Set global Governor" end
-        
+
         govMenu = menu({arrow_type=radical.base.arrow_type.CENTERED})
         govMenu:add_item {text=govLabel,sub_menu=function()
                 local govList=radical.context{}
@@ -253,16 +253,32 @@ local function new(margin, args)
         if not govMenu then
             generateGovernorMenu()
         end
-            govMenu.visible = not govMenu.visible
+        govMenu.visible = not govMenu.visible
     end
 
 
     local volumewidget2 = allinone()
     volumewidget2:set_icon(config.iconPath .. "brain.png")
-    vicious.register(volumewidget2, vicious.widgets.cpu,'$1',1)
+    --vicious.register(volumewidget2, vicious.widgets.cpu,'$1',1)
     volumewidget2:buttons (util.table.join( button({ }, 1, function (geo) show(); data.menu.parent_geometry = geo end),
-                                            button({ }, 3, function (geo) showGovernor(); govMenu.parent_geometry = geo end)))
+            button({ }, 3, function (geo) showGovernor(); govMenu.parent_geometry = geo end)))
 
+    local cpuLoadTimer=capi.timer({timeout = 1})
+    cpuLoadTimer:connect_signal("timeout", function()
+            fd_async.exec.command("awk -f "..util.getdir("config").."/drawer/Scripts/parseCpu.awk /proc/stat") :connect_signal("request::completed",function(content)
+                    --print("L:"..content)
+                    local buffer=content:split(";")
+                    if tonumber(buffer[1])==data.coreN then
+                        volumewidget2:set_text(string.format("%2.0f",buffer[2]))
+                        for i=1, (data.coreN) do
+                            main_table[i][2]:set_text(string.format("%2.1f",buffer[i+2]))
+                        end
+                    else
+                        print(buffer[1].."!="..data.coreN)
+                    end
+                end)
+        end)
+    cpuLoadTimer:start()
     --Initial menu loading quick fix
     show()
     show()
