@@ -93,7 +93,7 @@ local function new(margin, args)
     local cpuWidgetArrayL
     local main_table
     local volumewidget2
-    
+
     --Load initial data
     print("Load initial data")
     --Evaluate core number
@@ -107,17 +107,28 @@ local function new(margin, args)
     else
         print("Unable to load core number")    
     end
-    
---Functions-----------------------
+
+    --Functions-----------------------
+    --Refresh all cpu usage widgets (Bar widget,graph and table)
+    --take vicious data
     local function refreshCoreUsage(widget,content)
-        --print(content[2].." "..content[3])
-        volumewidget2:set_text(string.format("%2.0f",content[2]))
-        for i=1, (data.coreN) do
-            main_table[i][2]:set_text(string.format("%2.1f",content[i+1]))
+        --If menu created
+        if data.menu ~= nil then
+            --Add current value to graph
+            volUsage:add_value(content[2])
+
+            if data.menu.visible then
+                --Update table data only if visible
+                for i=1, (data.coreN) do
+                    main_table[i][2]:set_text(string.format("%2.1f",content[i+1]))
+                end
+            end
         end
+
+        --Set bar widget as global usage
         return content[1]
     end
-    
+
     local function loadData()
         --Load CPU Information
         --Get cores temperatures
@@ -157,8 +168,6 @@ local function new(margin, args)
             vicious.register(main_table[i+1][1], vicious.widgets.cpuinf,    function (widget, args)
                     return string.format("%.2f", args['{cpu'..i..' ghz}'])
                 end,2)
-            --Usage
-            --vicious.register(main_table[i+1][2], vicious.widgets.cpu,'$2',2)
             --Governor
             vicious.register(main_table[i+1][4], vicious.widgets.cpufreq,'$5',5,"cpu"..i)
         end
@@ -185,7 +194,7 @@ local function new(margin, args)
         volUsage:set_scale        ( true                                 )
         volUsage:set_border_color ( beautiful.fg_normal                  )
         volUsage:set_color        ( beautiful.fg_normal                  )
-        vicious.register          ( volUsage, vicious.widgets.cpu,refreshCoreUsage,1 )
+        --vicious.register          ( volUsage, vicious.widgets.cpu,refreshCoreUsage,1 )
 
 
     end
@@ -273,6 +282,7 @@ local function new(margin, args)
     --vicious.register(volumewidget2, vicious.widgets.cpu,'$1',1)
     volumewidget2:buttons (util.table.join( button({ }, 1, function (geo) show(); data.menu.parent_geometry = geo end),
             button({ }, 3, function (geo) showGovernor(); govMenu.parent_geometry = geo end)))
+    vicious.register( volumewidget2, vicious.widgets.cpu,refreshCoreUsage,1 )
     --Initial menu loading quick fix
     show()
     show()
