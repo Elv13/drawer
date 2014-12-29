@@ -83,6 +83,7 @@ local function reload_top(procMenu,data)
         end)
 end
 
+
 local function new(margin, args)
     local cpuModel
     local spacer1
@@ -90,9 +91,9 @@ local function new(margin, args)
 
     local modelWl
     local cpuWidgetArrayL
-    local cpuWidgetArrayL
     local main_table
-
+    local volumewidget2
+    
     --Load initial data
     print("Load initial data")
     --Evaluate core number
@@ -106,7 +107,17 @@ local function new(margin, args)
     else
         print("Unable to load core number")    
     end
-
+    
+--Functions-----------------------
+    local function refreshCoreUsage(widget,content)
+        --print(content[2].." "..content[3])
+        volumewidget2:set_text(string.format("%2.0f",content[2]))
+        for i=1, (data.coreN) do
+            main_table[i][2]:set_text(string.format("%2.1f",content[i+1]))
+        end
+        return content[1]
+    end
+    
     local function loadData()
         --Load CPU Information
         --Get cores temperatures
@@ -174,7 +185,7 @@ local function new(margin, args)
         volUsage:set_scale        ( true                                 )
         volUsage:set_border_color ( beautiful.fg_normal                  )
         volUsage:set_color        ( beautiful.fg_normal                  )
-        vicious.register          ( volUsage, vicious.widgets.cpu,'$1',3 )
+        vicious.register          ( volUsage, vicious.widgets.cpu,refreshCoreUsage,1 )
 
 
     end
@@ -257,28 +268,11 @@ local function new(margin, args)
     end
 
 
-    local volumewidget2 = allinone()
+    volumewidget2 = allinone()
     volumewidget2:set_icon(config.iconPath .. "brain.png")
     --vicious.register(volumewidget2, vicious.widgets.cpu,'$1',1)
     volumewidget2:buttons (util.table.join( button({ }, 1, function (geo) show(); data.menu.parent_geometry = geo end),
             button({ }, 3, function (geo) showGovernor(); govMenu.parent_geometry = geo end)))
-
-    local cpuLoadTimer=capi.timer({timeout = 1})
-    cpuLoadTimer:connect_signal("timeout", function()
-            fd_async.exec.command("awk -f "..util.getdir("config").."/drawer/Scripts/parseCpu.awk /proc/stat") :connect_signal("request::completed",function(content)
-                    --print("L:"..content)
-                    local buffer=content:split(";")
-                    if tonumber(buffer[1])==data.coreN then
-                        volumewidget2:set_text(string.format("%2.0f",buffer[2]))
-                        for i=1, (data.coreN) do
-                            main_table[i][2]:set_text(string.format("%2.1f",buffer[i+2]))
-                        end
-                    else
-                        print(buffer[1].."!="..data.coreN)
-                    end
-                end)
-        end)
-    cpuLoadTimer:start()
     --Initial menu loading quick fix
     show()
     show()
