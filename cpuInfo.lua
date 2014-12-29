@@ -39,7 +39,7 @@ local function match_icon(arr,name)
     end
 end
 
-local function reload_top(procMenu,data)
+local function refresh_process()
     data.process={}
 
     --Load process information
@@ -129,9 +129,10 @@ local function new(margin, args)
         return content[1]
     end
 
-    local function loadData()
-        --Load CPU Information
-        --Get cores temperatures
+
+
+    local function refresh()
+        --Update core(s) temperature
         local pipe0 = io.popen('sensors | grep "Core" | grep -e ": *+[0-9]*" -o| grep -e "[0-9]*" -o')
         local i=0
         for line in pipe0:lines() do
@@ -140,68 +141,7 @@ local function new(margin, args)
         end
         pipe0:close()
 
-    end
-
-    local function createDrawer()
-        cpuModel          = wibox.widget.textbox()
-        spacer1           = wibox.widget.textbox()
-        volUsage          = widget2.graph()
-
-        topCpuW           = {}
-        local emptyTable={};
-        local tabHeader={};
-        for i=1,data.coreN,1 do
-            emptyTable[i]= {"","","",""}
-            tabHeader[i]="C"..(i-1)
-        end
-        local tab,widgets = radtab(emptyTable,
-            {row_height=20,v_header = tabHeader,
-                h_header = {"GHz","Used %","Temp","Governor"}
-            })
-        main_table = widgets
-
-        --Single core load
-
-        --Register cell table as vicious widgets
-        for i=0, (data.coreN-1) do
-            --Cpu Speed (Frequency in Ghz
-            vicious.register(main_table[i+1][1], vicious.widgets.cpuinf,    function (widget, args)
-                    return string.format("%.2f", args['{cpu'..i..' ghz}'])
-                end,2)
-            --Governor
-            vicious.register(main_table[i+1][4], vicious.widgets.cpufreq,'$5',5,"cpu"..i)
-        end
-        modelWl         = wibox.layout.fixed.horizontal()
-        modelWl:add         ( cpuModel      )
-
-        loadData()
-
-        cpuWidgetArrayL = wibox.layout.margin()
-        cpuWidgetArrayL:set_margins(3)
-        cpuWidgetArrayL:set_bottom(10)
-        cpuWidgetArrayL:set_widget(tab)
-
-        --Load Cpu model
-        local pipeIn = io.popen('cat /proc/cpuinfo | grep "model name" | cut -d ":" -f2 | head -n 1',"r")
-        local cpuName = pipeIn:read("*all") or "N/A"
-        pipeIn:close()
-
-        cpuModel:set_text(cpuName)
-        cpuModel.width     = 212
-
-        volUsage:set_width        ( 212                                  )
-        volUsage:set_height       ( 30                                   )
-        volUsage:set_scale        ( true                                 )
-        volUsage:set_border_color ( beautiful.fg_normal                  )
-        volUsage:set_color        ( beautiful.fg_normal                  )
-        --vicious.register          ( volUsage, vicious.widgets.cpu,refreshCoreUsage,1 )
-
-
-    end
-
-    local function refresh()
-        loadData()
-        reload_top(procMenu,data)
+        refresh_process()
     end
 
     local function regenMenu()
@@ -223,7 +163,6 @@ local function new(margin, args)
 
     local function show()
         if not data.menu then
-            createDrawer()
             data.menu = regenMenu()
         end
         if not data.menu.visible then
@@ -276,6 +215,59 @@ local function new(margin, args)
         govMenu.visible = not govMenu.visible
     end
 
+    --Constructor
+    cpuModel          = wibox.widget.textbox()
+    spacer1           = wibox.widget.textbox()
+    volUsage          = widget2.graph()
+
+    topCpuW           = {}
+    local emptyTable={};
+    local tabHeader={};
+    for i=1,data.coreN,1 do
+        emptyTable[i]= {"","","",""}
+        tabHeader[i]="C"..(i-1)
+    end
+    local tab,widgets = radtab(emptyTable,
+        {row_height=20,v_header = tabHeader,
+            h_header = {"GHz","Used %","Temp","Governor"}
+        })
+    main_table = widgets
+
+    --Single core load
+
+    --Register cell table as vicious widgets
+    for i=0, (data.coreN-1) do
+        --Cpu Speed (Frequency in Ghz
+        vicious.register(main_table[i+1][1], vicious.widgets.cpuinf,    function (widget, args)
+                return string.format("%.2f", args['{cpu'..i..' ghz}'])
+            end,2)
+        --Governor
+        vicious.register(main_table[i+1][4], vicious.widgets.cpufreq,'$5',5,"cpu"..i)
+    end
+    modelWl         = wibox.layout.fixed.horizontal()
+    modelWl:add         ( cpuModel      )
+
+    --loadData()
+
+    cpuWidgetArrayL = wibox.layout.margin()
+    cpuWidgetArrayL:set_margins(3)
+    cpuWidgetArrayL:set_bottom(10)
+    cpuWidgetArrayL:set_widget(tab)
+
+    --Load Cpu model
+    local pipeIn = io.popen('cat /proc/cpuinfo | grep "model name" | cut -d ":" -f2 | head -n 1',"r")
+    local cpuName = pipeIn:read("*all") or "N/A"
+    pipeIn:close()
+
+    cpuModel:set_text(cpuName)
+    cpuModel.width     = 212
+
+    volUsage:set_width        ( 212                                  )
+    volUsage:set_height       ( 30                                   )
+    volUsage:set_scale        ( true                                 )
+    volUsage:set_border_color ( beautiful.fg_normal                  )
+    volUsage:set_color        ( beautiful.fg_normal                  )
+    --vicious.register          ( volUsage, vicious.widgets.cpu,refreshCoreUsage,1 )
 
     volumewidget2 = allinone()
     volumewidget2:set_icon(config.iconPath .. "brain.png")
@@ -284,8 +276,10 @@ local function new(margin, args)
             button({ }, 3, function (geo) showGovernor(); govMenu.parent_geometry = geo end)))
     vicious.register( volumewidget2, vicious.widgets.cpu,refreshCoreUsage,1 )
     --Initial menu loading quick fix
-    show()
-    show()
+    data.menu = regenMenu()
+    --reload_top()
+    --show()
+    --show()
 
     return volumewidget2
 end
