@@ -17,7 +17,6 @@ local radtab       = require( "radical.widgets.table" )
 local embed        = require( "radical.embed"         )
 local radical      = require( "radical"               )
 local color        = require( "gears.color"           )
-local cairo        = require( "lgi"                   ).cairo
 local allinone     = require( "widgets.allinone"      )
 local fd_async     = require("utils.fd_async"         )
 
@@ -26,18 +25,9 @@ local data     = {}
 --Menus
 local procMenu , govMenu = nil, nil
 
-local capi = { screen = screen , client = client ,
-    mouse  = mouse  , timer  = timer  }
+local capi = { client = client }
 
-local module = {}
-
-local function match_icon(arr,name)
-    for k2,v2 in ipairs(arr) do
-        if k2:find(name) ~= nil then
-            return v2
-        end
-    end
-end
+local cpuInfoModule = {}
 
 local function refresh_process()
     data.process={}
@@ -109,6 +99,31 @@ local function new(margin, args)
     end
 
     --Functions-----------------------
+    --"Public" (Accessible from outside)
+    --Toggle visibility if no argument given or set visibility. Return current visibility
+    cpuInfoModule.toggle=function(vibility)
+        if not data.menu then
+            local imb = wibox.widget.imagebox()
+            imb:set_image(beautiful.path .. "Icon/reload.png")
+            imb:buttons(button({ }, 1, function (geo) cpuInfoModule.refresh() end))
+
+            data.menu = menu({item_width=198,width=200,arrow_type=radical.base.arrow_type.CENTERED})
+            data.menu:add_widget(radical.widgets.header(data.menu,"INFO")  , {height = 20  , width = 200})
+            data.menu:add_widget(modelWl         , {height = 40  , width = 200})
+            data.menu:add_widget(radical.widgets.header(data.menu,"USAGE")   , {height = 20  , width = 200})
+            data.menu:add_widget(volUsage        , {height = 30  , width = 200})
+            data.menu:add_widget(cpuWidgetArrayL         , {width = 200})
+            data.menu:add_widget(radical.widgets.header(data.menu,"PROCESS",{suffix_widget=imb}) , {height = 20  , width = 200})
+            procMenu = embed({max_items=6})
+            data.menu:add_embeded_menu(procMenu)
+        end
+        if not data.menu.visible then
+            cpuInfoModule.refresh()
+        end
+        data.menu.visible = visibility or (not data.menu.visible)
+
+        return data.menu.visible
+    end
     --Refresh all cpu usage widgets (Bar widget,graph and table)
     --take vicious data
     local function refreshCoreUsage(widget,content)
@@ -131,7 +146,7 @@ local function new(margin, args)
 
 
 
-    local function refresh()
+    cpuInfoModule.refresh=function()
         --Update core(s) temperature
         local pipe0 = io.popen('sensors | grep "Core" | grep -e ": *+[0-9]*" -o| grep -e "[0-9]*" -o')
         local i=0
@@ -144,32 +159,8 @@ local function new(margin, args)
         refresh_process()
     end
 
-    local function regenMenu()
-        local imb = wibox.widget.imagebox()
-        imb:set_image(beautiful.path .. "Icon/reload.png")
-        imb:buttons(button({ }, 1, function (geo) refresh() end))
 
-        aMenu = menu({item_width=198,width=200,arrow_type=radical.base.arrow_type.CENTERED})
-        aMenu:add_widget(radical.widgets.header(aMenu,"INFO")  , {height = 20  , width = 200})
-        aMenu:add_widget(modelWl         , {height = 40  , width = 200})
-        aMenu:add_widget(radical.widgets.header(aMenu,"USAGE")   , {height = 20  , width = 200})
-        aMenu:add_widget(volUsage        , {height = 30  , width = 200})
-        aMenu:add_widget(cpuWidgetArrayL         , {width = 200})
-        aMenu:add_widget(radical.widgets.header(aMenu,"PROCESS",{suffix_widget=imb}) , {height = 20  , width = 200})
-        procMenu = embed({max_items=6})
-        aMenu:add_embeded_menu(procMenu)
-        return aMenu
-    end
 
-    local function show()
-        if not data.menu then
-            data.menu = regenMenu()
-        end
-        if not data.menu.visible then
-            refresh()
-        end
-        data.menu.visible = not data.menu.visible
-    end
 
     -- Generate governor list menu
     local function generateGovernorMenu(cpuN)
@@ -272,17 +263,15 @@ local function new(margin, args)
     volumewidget2 = allinone()
     volumewidget2:set_icon(config.iconPath .. "brain.png")
     --vicious.register(volumewidget2, vicious.widgets.cpu,'$1',1)
-    volumewidget2:buttons (util.table.join( button({ }, 1, function (geo) show(); data.menu.parent_geometry = geo end),
+    volumewidget2:buttons (util.table.join( button({ }, 1, function (geo) cpuInfoModule.toggle(); data.menu.parent_geometry = geo end),
             button({ }, 3, function (geo) showGovernor(); govMenu.parent_geometry = geo end)))
     vicious.register( volumewidget2, vicious.widgets.cpu,refreshCoreUsage,1 )
     --Initial menu loading quick fix
-    data.menu = regenMenu()
-    --reload_top()
-    --show()
-    --show()
+    cpuInfoModule.toggle()
+    cpuInfoModule.toggle()
 
     return volumewidget2
 end
 
-return setmetatable(module, { __call = function(_, ...) return new(...) end })
+return setmetatable(cpuInfoModule, { __call = function(_, ...) return new(...) end })
 -- kate: space-indent on; indent-width 2; replace-tabs on;
