@@ -2,7 +2,6 @@
 *Shared info
 memInfo
 cpuInfo
-	*Single cpu data update function for total, single core, and graph
 	*Extended governor Name
 netInfo
 	*check Online

@@ -1,8 +1,8 @@
 #!/bin/bash
 
 #Statistic
-A=`awk '$1~/Mem[(Total)(Free)]/{print $2/1024 ","} $1~/Swap[(Total)(Free)]/{print $2/1024 ","}' /proc/meminfo`
-echo 's;'$A
+#A=`awk '$1~/Mem[(Total)(Free)]/{print $2/1024 ","} $1~/Swap[(Total)(Free)]/{print $2/1024 ","}' /proc/meminfo`
+#echo 's;'$A
 #Users
 echo "u;`ps ax -eo user,stat | awk '{arr[$1]++} END{for(i in arr) {print arr[i],i}}' | sort -nr | tr "\n" ","`"
 #pie
