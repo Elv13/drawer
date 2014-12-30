@@ -15,7 +15,6 @@ local util         = require( "awful.util"               )
 local config       = require( "forgotten"                )
 local menu         = require( "radical.context"          )
 local themeutils   = require( "blind.common.drawing"     )
-local radtab       = require( "radical.widgets.table"    )
 local embed        = require( "radical.embed"            )
 local radical      = require( "radical"                  )
 local color        = require( "gears.color"              )
@@ -23,8 +22,7 @@ local cairo        = require( "lgi"                      ).cairo
 local allinone     = require( "widgets.allinone"         )
 local fd_async = require("utils.fd_async")
 
-local capi = { widget = widget , client = client ,
-    mouse  = mouse  , timer  = timer  }
+local capi = { widget = widget , client = client}
 
 local module = {}
 
@@ -32,7 +30,7 @@ local module = {}
 local protocolStat, appStat = {},{}
 local data={connectionInfo={},ip={}}
 local connLookup={ ["site"]=1,["pid"]=2,["application"]=3,["protocol"]=4}
-local netConfig={ifconfigExec={}}
+
 --WIDGET
 local ip4Info          , ipExtInfo          , localInfo        , netUsageUp
 local netUsageDown     , appHeader        , netUpGraph       , netDownGraph
@@ -49,7 +47,7 @@ local function update()
             if connNum == -1 then
                 --Get connections number (First line)
                 connNum=tonumber(content) or 0
-                print("INFO@netInfo: ",connNum," connection(s) found")
+                --print("INFO@netInfo: ",connNum," connection(s) found")
             elseif connNum == 0 then
                 --All line read, Repaint all!
                 connMenu:clear()
@@ -57,7 +55,7 @@ local function update()
                     if data.connectionInfo[i] then
                         -- Reset application connection count
                         if data.connectionInfo[i][connLookup['application']] ~= nil then
-                        appStat[data.connectionInfo[i][connLookup['application']] ] = 0
+                            appStat[data.connectionInfo[i][connLookup['application']] ] = 0
                         end
 
                         local application          = wibox.widget.textbox()
@@ -105,15 +103,12 @@ local function update()
                             break
                         end
                     end
-                    --         print("this",i)
                     appMenu:add_item({text=v,suffix_widget=testImage2,icon=icon,underlay = i})
                 end
             else
                 -- Load line into data
                 if content == nil then print ("This shouldn't happen...")
-                else
-                    --print("Line:",content)
-                    data.connectionInfo[connNum]=content:split(",")
+                else      data.connectionInfo[connNum]=content:split(",")
                 end
             end
 
@@ -133,15 +128,6 @@ local function update()
             data.ip['net'] =content or "N/A"
             ipExtInfo:set_markup("<i>"..data.ip['net'] .. "</i>")
         end)
-
-    local localValue = ""
-    f = io.open('/tmp/localNetLookup','r')
-    if f ~= nil then
-        localValue = f:read("*all")
-        f:close()
-    end
-
-    localInfo:set_text(localValue)
 
 end
 
@@ -378,10 +364,6 @@ local function new(margin, args)
         cr:restore()
     end
 
-    --Find ifconfig path or use plain ifconfig
-    local f = io.popen('whereis ifconfig | sed "s/ /\\n/g" | grep ifconfig$')
-    netConfig.ifconfigExec = f:read("*line") or "ifconfig"
-    f:close()
 
     --Initial menu loading quick fix
     show()
