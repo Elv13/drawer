@@ -229,9 +229,6 @@ local function new(margin, args)
 
     volumewidget2:buttons (buttonclick)
 
-    --Create update timer
-    --myTimer = capi.timer({ timeout = 1 })
-    --myTimer:connect_signal("timeout", refreshStat)
     --Same old trick to fix first load
     --TODO: Fix first load problem with embed widgets
     toggle()
