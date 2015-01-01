@@ -125,7 +125,7 @@ local function new(mywibox3,args)
         moduleSound.drawMenu=function()
             local mainMenu=  radical.context({width=200,arrow_type=radical.base.arrow_type.CENTERED})
             --Add menu header
-            mainMenu:add_widget(radical.widgets.header(aMenu,"CHANNEL")  , {height = 20  , width = 200})
+            mainMenu:add_widget(radical.widgets.header(mainMenu,"OUT")  , {height = 20  , width = 200})
 
             --Parse Devices names
             local pipe = io.popen("amixer | awk -f "..util.getdir("config").."/drawer/Scripts/parseAlsa.awk")
@@ -164,11 +164,11 @@ local function new(mywibox3,args)
             local mainMenu,aVolume,data,isMute
             mainMenu=  radical.context({width=300,arrow_type=radical.base.arrow_type.CENTERED})
             --Add header
-            mainMenu:add_widget(radical.widgets.header(aMenu,"CHANNEL")  , {height = 20  , width = 200})
+            mainMenu:add_widget(radical.widgets.header(mainMenu,"OUT")  , {height = 20  , width = 200})
             --Parse pactl stuff
             local pipe=io.popen("pactl list | awk -f "..util.getdir("config").."/drawer/Scripts/parsePactl.awk")
             for line in pipe:lines() do
-                data=string.split(line,";")
+                local data=string.split(line,";")
                 if #data>=5 then
                     aVolume=tonumber(data[3]:match("%d+") or 0)/100
                     isMute = false
