@@ -326,26 +326,28 @@ local function new(margin, args)
     volumewidget3:set_value(1)
     volumewidget3:icon_align("left")
     vicious.register(volumewidget2  , vicious.widgets.net   ,  function(widgets,args)
-            local sum=0
+            local upSum,downSum=0,0
+            --Sum all interface upload and download rate
             for i,v in pairs(args) do
                 if i:match("up_kb") then
-                    sum=sum+tonumber(v)
+                    upSum=upSum+tonumber(v)
+                elseif i:match("down_kb") then
+                    downSum=downSum+tonumber(v)
                 end
             end
-            netUpGraph:add_value(sum)
-            print("SUM "..sum)
-            return sum
+            
+            --Convert to kBps
+            upSum=math.ceil(upSum/8)
+            downSum=math.ceil(downSum/8)
+            
+            --Update all widgets
+            netUpGraph:add_value(upSum)
+            netDownGraph:add_value(downSum)
+            print("UPSUM:"..upSum.." DOWNSUM:"..downSum)
+            volumewidget3:set_text(downSum)
+            return upSum
         end   ,1 )
-    vicious.register(volumewidget3, vicious.widgets.net   ,  function(widgets,args)
-            local sum=0
-            for i,v in pairs(args) do
-                if i:match("down_kb") then
-                    sum=sum+tonumber(v)
-                end
-            end
-            netDownGraph:add_value(sum)
-            return sum
-        end ,1 )
+    --vicious.register(volumewidget3, vicious.widgets.net   ,  ,1 )
 
     local l = wibox.layout.fixed.horizontal()
     l:add(volumewidget2)
