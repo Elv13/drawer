@@ -157,29 +157,9 @@ local function repaint(margin)
         g:set_color             (beautiful.menu_bg_header or beautiful.fg_normal)
     end
     setup_graph(netUpGraph)
-    vicious.register                 (netUpGraph, vicious.widgets.net,  function(widgets,args)
-            local sum=0
-            for i,v in pairs(args) do
-                if i:match("up_kb") then
-                    sum=sum+tonumber(v)
-                    --print(i,v)
-                end
-            end
-            return sum
-        end ,1)
+    --vicious.register(netUpGraph, vicious.widgets.net,  ,1)
     setup_graph(netDownGraph)
-    vicious.register                 (netDownGraph, vicious.widgets.net, function(widgets,args)
-            local sum=0
-            for i,v in pairs(args) do
-                if i:match("down_kb") then
-                    sum=sum+tonumber(v)
-                    --print(i,v)
-                end
-
-            end
-
-            return sum
-        end,1)
+    --vicious.register(netDownGraph, vicious.widgets.net, ,1)
 
     local mar = wibox.layout.margin()
     local lay = wibox.layout.fixed.vertical()
@@ -345,8 +325,27 @@ local function new(margin, args)
     volumewidget3:set_suffix_icon(config.iconPath .. "kbs.png")
     volumewidget3:set_value(1)
     volumewidget3:icon_align("left")
-    vicious.register(volumewidget2  , vicious.widgets.net   ,  '${eth0 up_kb}'   ,3 )
-    vicious.register(volumewidget3, vicious.widgets.net   ,  '${eth0 down_kb}' ,3 )
+    vicious.register(volumewidget2  , vicious.widgets.net   ,  function(widgets,args)
+            local sum=0
+            for i,v in pairs(args) do
+                if i:match("up_kb") then
+                    sum=sum+tonumber(v)
+                end
+            end
+            netUpGraph:add_value(sum)
+            print("SUM "..sum)
+            return sum
+        end   ,1 )
+    vicious.register(volumewidget3, vicious.widgets.net   ,  function(widgets,args)
+            local sum=0
+            for i,v in pairs(args) do
+                if i:match("down_kb") then
+                    sum=sum+tonumber(v)
+                end
+            end
+            netDownGraph:add_value(sum)
+            return sum
+        end ,1 )
 
     local l = wibox.layout.fixed.horizontal()
     l:add(volumewidget2)
