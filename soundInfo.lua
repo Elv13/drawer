@@ -166,7 +166,7 @@ local function new(mywibox3,args)
             --Add header
             mainMenu:add_widget(radical.widgets.header(mainMenu,"OUT")  , {height = 20  , width = 200})
             --Parse pactl stuff
-            local pipe=io.popen("pactl list | awk -f "..util.getdir("config").."/drawer/Scripts/parsePactl.awk")
+            local pipe=io.popen("pactl list sinks| awk -f "..util.getdir("config").."/drawer/Scripts/parsePactl.awk")
             for line in pipe:lines() do
                 local data=string.split(line,";")
                 if #data>=5 then
@@ -190,25 +190,11 @@ local function new(mywibox3,args)
         local f= io.popen("amixer sget Master | awk '/Front.*Playback/{print $5; exit}'| grep -o -e '[0-9]*'")
 
         if f then
-            local l = tonumber(f:read()) or 0
+            return tonumber(f:read("*a")) or 0
         else
             print("Calling amixer failed")
         end
-
-        local toReturn
-        if (not l) or l == "" then
-            toReturn = 0
-            errcount = errcount + 1
-            if errcount > 10 then
-                print("Too many amixer failure, stopping listener")
-                vicious.unregister(volumewidget2)
-            end
-        else
-            --Save master volume
-            masterVolume = tonumber(l)
-            return {masterVolume}
-        end
-        return {}
+        return 0
     end
 
     function toggle()
@@ -283,7 +269,7 @@ local function new(mywibox3,args)
         )
     end
 
-    vicious.register(volumewidget2, amixer_volume_int, '$1',5)
+    vicious.register(volumewidget2, amixer_volume_int,1)
     volumewidget2:buttons(btn)
     return volumewidget2
 end
