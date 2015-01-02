@@ -166,7 +166,7 @@ local function new(mywibox3,args)
             --Add header
             mainMenu:add_widget(radical.widgets.header(mainMenu,"OUT")  , {height = 20  , width = 200})
             --Parse pactl stuff
-            local pipe=io.popen("pactl list | awk -f "..util.getdir("config").."/drawer/Scripts/parsePactl.awk")
+            local pipe=io.popen("pactl list sinks| awk -f "..util.getdir("config").."/drawer/Scripts/parsePactl.awk")
             for line in pipe:lines() do
                 local data=string.split(line,";")
                 if #data>=5 then
@@ -269,7 +269,7 @@ local function new(mywibox3,args)
         )
     end
 
-    vicious.register(volumewidget2, amixer_volume_int,5)
+    vicious.register(volumewidget2, amixer_volume_int,1)
     volumewidget2:buttons(btn)
     return volumewidget2
 end
