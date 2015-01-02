@@ -338,14 +338,15 @@ local function new(margin, args)
             --Update graph
             netUpGraph:add_value(upSum)
             netDownGraph:add_value(downSum)
-            
+
             --Update widgets
             if upSum > 1024 then
                 upSum=string.format("%.2f",upSum/1024)
                 volumewidget2:set_suffix("MBps")
-                else
+            else
                 volumewidget2:set_suffix("kBps")
-                end
+            end
+            
             if downSum > 1024 then
                 downSum=string.format("%.2f",downSum/1024)
                 volumewidget3:set_suffix("MBps")
@@ -353,7 +354,6 @@ local function new(margin, args)
                 volumewidget3:set_suffix("kBps")
             end
 
-            print("UPSUM:"..upSum.." DOWNSUM:"..downSum)
             volumewidget3:set_text(downSum)
             return upSum
         end   ,1 )
