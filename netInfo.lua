@@ -311,8 +311,8 @@ local function new(margin, args)
     volumewidget2:hide_left(true)
     volumewidget2:set_mirror(true)
     volumewidget2:set_icon(config.iconPath .. "arrowUp.png")
-    volumewidget2:set_suffix("")
-    volumewidget2:set_suffix_icon(config.iconPath .. "kbs.png")
+    --volumewidget2:set_suffix("kBps")
+    --volumewidget2:set_suffix_icon(config.iconPath .. "kbs.png")
     volumewidget2:set_value(1)
     volumewidget2:icon_align("left")
 
@@ -321,8 +321,8 @@ local function new(margin, args)
     volumewidget3.set_value = set_value
     volumewidget3:hide_left(true)
     volumewidget3:set_icon(config.iconPath .. "arrowDown.png")
-    volumewidget3:set_suffix("")
-    volumewidget3:set_suffix_icon(config.iconPath .. "kbs.png")
+    --volumewidget3:set_suffix("")
+    --volumewidget3:set_suffix_icon(config.iconPath .. "kbs.png")
     volumewidget3:set_value(1)
     volumewidget3:icon_align("left")
     vicious.register(volumewidget2  , vicious.widgets.net   ,  function(widgets,args)
@@ -335,14 +335,24 @@ local function new(margin, args)
                     downSum=downSum+tonumber(v)
                 end
             end
-            
-            --Convert to kBps
-            upSum=math.ceil(upSum/8)
-            downSum=math.ceil(downSum/8)
-            
-            --Update all widgets
+            --Update graph
             netUpGraph:add_value(upSum)
             netDownGraph:add_value(downSum)
+            
+            --Update widgets
+            if upSum > 1024 then
+                upSum=string.format("%.2f",upSum/1024)
+                volumewidget2:set_suffix("MBps")
+                else
+                volumewidget2:set_suffix("kBps")
+                end
+            if downSum > 1024 then
+                downSum=string.format("%.2f",downSum/1024)
+                volumewidget3:set_suffix("MBps")
+            else
+                volumewidget3:set_suffix("kBps")
+            end
+
             print("UPSUM:"..upSum.." DOWNSUM:"..downSum)
             volumewidget3:set_text(downSum)
             return upSum
