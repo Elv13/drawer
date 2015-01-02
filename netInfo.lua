@@ -15,7 +15,6 @@ local util         = require( "awful.util"               )
 local config       = require( "forgotten"                )
 local menu         = require( "radical.context"          )
 local themeutils   = require( "blind.common.drawing"     )
-local radtab       = require( "radical.widgets.table"    )
 local embed        = require( "radical.embed"            )
 local radical      = require( "radical"                  )
 local color        = require( "gears.color"              )
@@ -23,8 +22,7 @@ local cairo        = require( "lgi"                      ).cairo
 local allinone     = require( "widgets.allinone"         )
 local fd_async = require("utils.fd_async")
 
-local capi = { widget = widget , client = client ,
-    mouse  = mouse  , timer  = timer  }
+local capi = { widget = widget , client = client}
 
 local module = {}
 
@@ -32,7 +30,7 @@ local module = {}
 local protocolStat, appStat = {},{}
 local data={connectionInfo={},ip={}}
 local connLookup={ ["site"]=1,["pid"]=2,["application"]=3,["protocol"]=4}
-local netConfig={ifconfigExec={}}
+
 --WIDGET
 local ip4Info          , ipExtInfo          , localInfo        , netUsageUp
 local netUsageDown     , appHeader        , netUpGraph       , netDownGraph
@@ -49,7 +47,7 @@ local function update()
             if connNum == -1 then
                 --Get connections number (First line)
                 connNum=tonumber(content) or 0
-                print("INFO@netInfo: ",connNum," connection(s) found")
+                --print("INFO@netInfo: ",connNum," connection(s) found")
             elseif connNum == 0 then
                 --All line read, Repaint all!
                 connMenu:clear()
@@ -57,7 +55,7 @@ local function update()
                     if data.connectionInfo[i] then
                         -- Reset application connection count
                         if data.connectionInfo[i][connLookup['application']] ~= nil then
-                        appStat[data.connectionInfo[i][connLookup['application']] ] = 0
+                            appStat[data.connectionInfo[i][connLookup['application']] ] = 0
                         end
 
                         local application          = wibox.widget.textbox()
@@ -105,15 +103,12 @@ local function update()
                             break
                         end
                     end
-                    --         print("this",i)
                     appMenu:add_item({text=v,suffix_widget=testImage2,icon=icon,underlay = i})
                 end
             else
                 -- Load line into data
                 if content == nil then print ("This shouldn't happen...")
-                else
-                    --print("Line:",content)
-                    data.connectionInfo[connNum]=content:split(",")
+                else      data.connectionInfo[connNum]=content:split(",")
                 end
             end
 
@@ -133,15 +128,6 @@ local function update()
             data.ip['net'] =content or "N/A"
             ipExtInfo:set_markup("<i>"..data.ip['net'] .. "</i>")
         end)
-
-    local localValue = ""
-    f = io.open('/tmp/localNetLookup','r')
-    if f ~= nil then
-        localValue = f:read("*all")
-        f:close()
-    end
-
-    localInfo:set_text(localValue)
 
 end
 
@@ -171,29 +157,9 @@ local function repaint(margin)
         g:set_color             (beautiful.menu_bg_header or beautiful.fg_normal)
     end
     setup_graph(netUpGraph)
-    vicious.register                 (netUpGraph, vicious.widgets.net,  function(widgets,args)
-            local sum=0
-            for i,v in pairs(args) do
-                if i:match("up_kb") then
-                    sum=sum+tonumber(v)
-                    --print(i,v)
-                end
-            end
-            return sum
-        end ,1)
+    --vicious.register(netUpGraph, vicious.widgets.net,  ,1)
     setup_graph(netDownGraph)
-    vicious.register                 (netDownGraph, vicious.widgets.net, function(widgets,args)
-            local sum=0
-            for i,v in pairs(args) do
-                if i:match("down_kb") then
-                    sum=sum+tonumber(v)
-                    --print(i,v)
-                end
-
-            end
-
-            return sum
-        end,1)
+    --vicious.register(netDownGraph, vicious.widgets.net, ,1)
 
     local mar = wibox.layout.margin()
     local lay = wibox.layout.fixed.vertical()
@@ -345,8 +311,8 @@ local function new(margin, args)
     volumewidget2:hide_left(true)
     volumewidget2:set_mirror(true)
     volumewidget2:set_icon(config.iconPath .. "arrowUp.png")
-    volumewidget2:set_suffix("")
-    volumewidget2:set_suffix_icon(config.iconPath .. "kbs.png")
+    --volumewidget2:set_suffix("kBps")
+    --volumewidget2:set_suffix_icon(config.iconPath .. "kbs.png")
     volumewidget2:set_value(1)
     volumewidget2:icon_align("left")
 
@@ -355,12 +321,43 @@ local function new(margin, args)
     volumewidget3.set_value = set_value
     volumewidget3:hide_left(true)
     volumewidget3:set_icon(config.iconPath .. "arrowDown.png")
-    volumewidget3:set_suffix("")
-    volumewidget3:set_suffix_icon(config.iconPath .. "kbs.png")
+    --volumewidget3:set_suffix("")
+    --volumewidget3:set_suffix_icon(config.iconPath .. "kbs.png")
     volumewidget3:set_value(1)
     volumewidget3:icon_align("left")
-    vicious.register(volumewidget2  , vicious.widgets.net   ,  '${eth0 up_kb}'   ,3 )
-    vicious.register(volumewidget3, vicious.widgets.net   ,  '${eth0 down_kb}' ,3 )
+    vicious.register(volumewidget2  , vicious.widgets.net   ,  function(widgets,args)
+            local upSum,downSum=0,0
+            --Sum all interface upload and download rate
+            for i,v in pairs(args) do
+                if i:match("up_kb") then
+                    upSum=upSum+tonumber(v)
+                elseif i:match("down_kb") then
+                    downSum=downSum+tonumber(v)
+                end
+            end
+            --Update graph
+            netUpGraph:add_value(upSum)
+            netDownGraph:add_value(downSum)
+            
+            --Update widgets
+            if upSum > 1024 then
+                upSum=string.format("%.2f",upSum/1024)
+                volumewidget2:set_suffix("MBps")
+                else
+                volumewidget2:set_suffix("kBps")
+                end
+            if downSum > 1024 then
+                downSum=string.format("%.2f",downSum/1024)
+                volumewidget3:set_suffix("MBps")
+            else
+                volumewidget3:set_suffix("kBps")
+            end
+
+            print("UPSUM:"..upSum.." DOWNSUM:"..downSum)
+            volumewidget3:set_text(downSum)
+            return upSum
+        end   ,1 )
+    --vicious.register(volumewidget3, vicious.widgets.net   ,  ,1 )
 
     local l = wibox.layout.fixed.horizontal()
     l:add(volumewidget2)
@@ -378,10 +375,6 @@ local function new(margin, args)
         cr:restore()
     end
 
-    --Find ifconfig path or use plain ifconfig
-    local f = io.popen('whereis ifconfig | sed "s/ /\\n/g" | grep ifconfig$')
-    netConfig.ifconfigExec = f:read("*line") or "ifconfig"
-    f:close()
 
     --Initial menu loading quick fix
     show()
