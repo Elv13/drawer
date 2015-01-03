@@ -8,7 +8,7 @@ local beautiful    = require( "beautiful"             )
 local button       = require( "awful.button"          )
 local widget2      = require( "awful.widget"          )
 local config       = require( "forgotten"             )
-local vicious      = require( "extern.vicious"        )
+local vicious      = require( "vicious"        )
 local menu         = require( "radical.context"       )
 local util         = require( "awful.util"            )
 local wibox        = require( "wibox"                 )
@@ -17,7 +17,6 @@ local radtab       = require( "radical.widgets.table" )
 local embed        = require( "radical.embed"         )
 local radical      = require( "radical"               )
 local color        = require( "gears.color"           )
-local cairo        = require( "lgi"                   ).cairo
 local allinone     = require( "widgets.allinone"      )
 local fd_async     = require("utils.fd_async"         )
 
@@ -26,20 +25,11 @@ local data     = {}
 --Menus
 local procMenu , govMenu = nil, nil
 
-local capi = { screen = screen , client = client ,
-    mouse  = mouse  , timer  = timer  }
+local capi = { client = client }
 
-local module = {}
+local cpuInfoModule = {}
 
-local function match_icon(arr,name)
-    for k2,v2 in ipairs(arr) do
-        if k2:find(name) ~= nil then
-            return v2
-        end
-    end
-end
-
-local function reload_top(procMenu,data)
+local function refresh_process()
     data.process={}
 
     --Load process information
@@ -83,6 +73,7 @@ local function reload_top(procMenu,data)
         end)
 end
 
+
 local function new(margin, args)
     local cpuModel
     local spacer1
@@ -90,8 +81,8 @@ local function new(margin, args)
 
     local modelWl
     local cpuWidgetArrayL
-    local cpuWidgetArrayL
     local main_table
+    local volumewidget2
 
     --Load initial data
     print("Load initial data")
@@ -107,9 +98,56 @@ local function new(margin, args)
         print("Unable to load core number")    
     end
 
-    local function loadData()
-        --Load CPU Information
-        --Get cores temperatures
+    --Functions-----------------------
+    --"Public" (Accessible from outside)
+    --Toggle visibility if no argument given or set visibility. Return current visibility
+    cpuInfoModule.toggle=function(vibility)
+        if not data.menu then
+            local imb = wibox.widget.imagebox()
+            imb:set_image(beautiful.path .. "Icon/reload.png")
+            imb:buttons(button({ }, 1, function (geo) cpuInfoModule.refresh() end))
+
+            data.menu = menu({item_width=198,width=200,arrow_type=radical.base.arrow_type.CENTERED})
+            data.menu:add_widget(radical.widgets.header(data.menu,"INFO")  , {height = 20  , width = 200})
+            data.menu:add_widget(modelWl         , {height = 40  , width = 200})
+            data.menu:add_widget(radical.widgets.header(data.menu,"USAGE")   , {height = 20  , width = 200})
+            data.menu:add_widget(volUsage        , {height = 30  , width = 200})
+            data.menu:add_widget(cpuWidgetArrayL         , {width = 200})
+            data.menu:add_widget(radical.widgets.header(data.menu,"PROCESS",{suffix_widget=imb}) , {height = 20  , width = 200})
+            procMenu = embed({max_items=6})
+            data.menu:add_embeded_menu(procMenu)
+        end
+        if not data.menu.visible then
+            cpuInfoModule.refresh()
+        end
+        data.menu.visible = visibility or (not data.menu.visible)
+
+        return data.menu.visible
+    end
+    --Refresh all cpu usage widgets (Bar widget,graph and table)
+    --take vicious data
+    local function refreshCoreUsage(widget,content)
+        --If menu created
+        if data.menu ~= nil then
+            --Add current value to graph
+            volUsage:add_value(content[2])
+
+            if data.menu.visible then
+                --Update table data only if visible
+                for i=1, (data.coreN) do
+                    main_table[i][2]:set_text(string.format("%2.1f",content[i+1]))
+                end
+            end
+        end
+
+        --Set bar widget as global usage
+        return content[1]
+    end
+
+
+
+    cpuInfoModule.refresh=function()
+        --Update core(s) temperature
         local pipe0 = io.popen('sensors | grep "Core" | grep -e ": *+[0-9]*" -o| grep -e "[0-9]*" -o')
         local i=0
         for line in pipe0:lines() do
@@ -118,104 +156,18 @@ local function new(margin, args)
         end
         pipe0:close()
 
+        refresh_process()
     end
 
-    local function createDrawer()
-        cpuModel          = wibox.widget.textbox()
-        spacer1           = wibox.widget.textbox()
-        volUsage          = widget2.graph()
-
-        topCpuW           = {}
-        local emptyTable={};
-        local tabHeader={};
-        for i=1,data.coreN,1 do
-            emptyTable[i]= {"","","",""}
-            tabHeader[i]="C"..(i-1)
-        end
-        local tab,widgets = radtab(emptyTable,
-            {row_height=20,v_header = tabHeader,
-                h_header = {"GHz","Used","Temp","Governor"}
-            })
-        main_table = widgets
-
-        --Register cell table as vicious widgets
-        for i=0, (data.coreN-1) do
-            --Cpu Speed (Frequency in Ghz
-            vicious.register(main_table[i+1][1], vicious.widgets.cpuinf,    function (widget, args)
-                    return string.format("%.2f", args['{cpu'..i..' ghz}'])
-                end,2)
-            --Usage
-            vicious.register(main_table[i+1][2], vicious.widgets.cpu,'$'..(i+2)..' %',1)
-            --Governor
-            vicious.register(main_table[i+1][4], vicious.widgets.cpufreq,'$5',5,"cpu"..i)
-        end
-        modelWl         = wibox.layout.fixed.horizontal()
-        modelWl:add         ( cpuModel      )
-
-        loadData()
-
-        cpuWidgetArrayL = wibox.layout.margin()
-        cpuWidgetArrayL:set_margins(3)
-        cpuWidgetArrayL:set_bottom(10)
-        cpuWidgetArrayL:set_widget(tab)
-
-        --Load Cpu model
-        local pipeIn = io.popen('cat /proc/cpuinfo | grep "model name" | cut -d ":" -f2 | head -n 1',"r")
-        local cpuName = pipeIn:read("*all") or "N/A"
-        pipeIn:close()
-
-        cpuModel:set_text(cpuName)
-        cpuModel.width     = 212
-
-        volUsage:set_width        ( 212                                  )
-        volUsage:set_height       ( 30                                   )
-        volUsage:set_scale        ( true                                 )
-        volUsage:set_border_color ( beautiful.fg_normal                  )
-        volUsage:set_color        ( beautiful.fg_normal                  )
-        vicious.register          ( volUsage, vicious.widgets.cpu,'$1',1 )
 
 
-    end
-
-    local function refresh()
-        loadData()
-        reload_top(procMenu,data)
-    end
-
-    local function regenMenu()
-        local imb = wibox.widget.imagebox()
-        imb:set_image(beautiful.path .. "Icon/reload.png")
-        imb:buttons(button({ }, 1, function (geo) refresh() end))
-
-        aMenu = menu({item_width=198,width=200,arrow_type=radical.base.arrow_type.CENTERED})
-        aMenu:add_widget(radical.widgets.header(aMenu,"INFO")  , {height = 20  , width = 200})
-        aMenu:add_widget(modelWl         , {height = 40  , width = 200})
-        aMenu:add_widget(radical.widgets.header(aMenu,"USAGE")   , {height = 20  , width = 200})
-        aMenu:add_widget(volUsage        , {height = 30  , width = 200})
-        aMenu:add_widget(cpuWidgetArrayL         , {width = 200})
-        aMenu:add_widget(radical.widgets.header(aMenu,"PROCESS",{suffix_widget=imb}) , {height = 20  , width = 200})
-        procMenu = embed({max_items=6})
-        aMenu:add_embeded_menu(procMenu)
-        return aMenu
-    end
-
-    local function show()
-        if not data.menu then
-            createDrawer()
-            data.menu = regenMenu()
-        end
-        if not data.menu.visible then
-            refresh()
-        end
-        data.menu.visible = not data.menu.visible
-    end
 
     -- Generate governor list menu
     local function generateGovernorMenu(cpuN)
         local govLabel
         if cpuN ~= nil then govLabel="Set Cpu"..cpuN.." Governor"
         else govLabel="Set global Governor" end
-        
+
         govMenu = menu({arrow_type=radical.base.arrow_type.CENTERED})
         govMenu:add_item {text=govLabel,sub_menu=function()
                 local govList=radical.context{}
@@ -251,22 +203,75 @@ local function new(margin, args)
         if not govMenu then
             generateGovernorMenu()
         end
-            govMenu.visible = not govMenu.visible
+        govMenu.visible = not govMenu.visible
     end
 
+    --Constructor
+    cpuModel          = wibox.widget.textbox()
+    spacer1           = wibox.widget.textbox()
+    volUsage          = widget2.graph()
 
-    local volumewidget2 = allinone()
+    topCpuW           = {}
+    local emptyTable={};
+    local tabHeader={};
+    for i=1,data.coreN,1 do
+        emptyTable[i]= {"","","",""}
+        tabHeader[i]="C"..(i-1)
+    end
+    local tab,widgets = radtab(emptyTable,
+        {row_height=20,v_header = tabHeader,
+            h_header = {"GHz","Used %","Temp","Governor"}
+        })
+    main_table = widgets
+
+    --Single core load
+
+    --Register cell table as vicious widgets
+    for i=0, (data.coreN-1) do
+        --Cpu Speed (Frequency in Ghz
+        vicious.register(main_table[i+1][1], vicious.widgets.cpuinf,    function (widget, args)
+                return string.format("%.2f", args['{cpu'..i..' ghz}'])
+            end,2)
+        --Governor
+        vicious.register(main_table[i+1][4], vicious.widgets.cpufreq,'$5',5,"cpu"..i)
+    end
+    modelWl         = wibox.layout.fixed.horizontal()
+    modelWl:add         ( cpuModel      )
+
+    --loadData()
+
+    cpuWidgetArrayL = wibox.layout.margin()
+    cpuWidgetArrayL:set_margins(3)
+    cpuWidgetArrayL:set_bottom(10)
+    cpuWidgetArrayL:set_widget(tab)
+
+    --Load Cpu model
+    local pipeIn = io.popen('cat /proc/cpuinfo | grep "model name" | cut -d ":" -f2 | head -n 1',"r")
+    local cpuName = pipeIn:read("*all") or "N/A"
+    pipeIn:close()
+
+    cpuModel:set_text(cpuName)
+    cpuModel.width     = 212
+
+    volUsage:set_width        ( 212                                  )
+    volUsage:set_height       ( 30                                   )
+    volUsage:set_scale        ( true                                 )
+    volUsage:set_border_color ( beautiful.fg_normal                  )
+    volUsage:set_color        ( beautiful.fg_normal                  )
+    --vicious.register          ( volUsage, vicious.widgets.cpu,refreshCoreUsage,1 )
+
+    volumewidget2 = allinone()
     volumewidget2:set_icon(config.iconPath .. "brain.png")
-    vicious.register(volumewidget2, vicious.widgets.cpu,'$1',1)
-    volumewidget2:buttons (util.table.join( button({ }, 1, function (geo) show(); data.menu.parent_geometry = geo end),
-                                            button({ }, 3, function (geo) showGovernor(); govMenu.parent_geometry = geo end)))
-
+    --vicious.register(volumewidget2, vicious.widgets.cpu,'$1',1)
+    volumewidget2:buttons (util.table.join( button({ }, 1, function (geo) cpuInfoModule.toggle(); data.menu.parent_geometry = geo end),
+            button({ }, 3, function (geo) showGovernor(); govMenu.parent_geometry = geo end)))
+    vicious.register( volumewidget2, vicious.widgets.cpu,refreshCoreUsage,1 )
     --Initial menu loading quick fix
-    show()
-    show()
+    cpuInfoModule.toggle()
+    cpuInfoModule.toggle()
 
     return volumewidget2
 end
 
-return setmetatable(module, { __call = function(_, ...) return new(...) end })
+return setmetatable(cpuInfoModule, { __call = function(_, ...) return new(...) end })
 -- kate: space-indent on; indent-width 2; replace-tabs on;

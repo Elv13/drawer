@@ -14,7 +14,7 @@ local widget2      = require( "awful.widget"             )
 local wibox        = require( "wibox"                    )
 local menu         = require( "radical.context"          )
 local radtab       = require( "radical.widgets.table"    )
-local vicious      = require( "extern.vicious"           )
+local vicious      = require( "vicious"           )
 local config       = require( "forgotten"                )
 local util         = require( "awful.util"               )
 local radical      = require( "radical"                  )
@@ -39,7 +39,7 @@ local dataMenu = nil
 local process = {}
 local memState = {}
 
-local myTimer
+--local myTimer
 
 local tabWdg = nil
 local tabWdgCol = {
@@ -67,14 +67,13 @@ local function refreshStat()
             local packet = content:split(";")
             --Check for header
             if packet[1] == 't' then
-                --top line
-                --print("--top line",packet[2])
+                --Top line
+
                 --Check for empty packet line
                 if packet[2] ~= nil then
                     --Insert process
                     table.insert(process,packet[2]:split(","))
                 else
-                    --print("Repaint")
                     --Repaint
                     topMenu:clear()
                     for i = 0, #(process or {}) do
@@ -97,11 +96,6 @@ local function refreshStat()
                                 cr:set_source(color(topMenu.bg_alternate))
                                 cr:rectangle(0,0,width-height/2,height)
                                 cr:fill()
-                                --                 if aMem.bg_image then
-                                --                     cr:set_source(aMem.bg_image)
-                                --                     cr:paint()
-                                --                 end
-
                                 cr:set_source_surface(themeutils.get_beg_arrow2({bg_color=topMenu.bg_alternate}),width-height/2,0)
                                 cr:paint()
                                 cr:restore()
@@ -119,7 +113,7 @@ local function refreshStat()
 
 
             elseif packet[1] == 'u' then
-                -- print("--user line",packet[2])
+                -- Users line
                 --Clear User menu
                 usrMenu:clear()
                 --Reload User list
@@ -139,7 +133,7 @@ local function refreshStat()
                     end
                 end
             elseif packet[1] == 'p' then
-                --print("--process line",packet[2])
+                --Process line
                 if packet[2] ~= nil then
                     local data=packet[2]:split(',')
                     for key,field in pairs(data) do
@@ -151,25 +145,24 @@ local function refreshStat()
                         typeMenu:set_data(memState)
                     end
                 end
-            elseif packet[1] == 's' then
-                --Statistic line
-                if packet[2] ~= nil then
-                    local memData=packet[2]:split(',')
-                    if tabWdg then
-                        tabWdg[ tabWdgRow.RAM  ][ tabWdgCol.TOTAL ]:set_text( string.format("%.2f GB",memData[1]/1024) or "N/A")
-                        tabWdg[ tabWdgRow.RAM  ][ tabWdgCol.FREE  ]:set_text( string.format("%.2f GB",memData[2]/1024) or "N/A")
-                        tabWdg[ tabWdgRow.RAM  ][ tabWdgCol.USED  ]:set_text((string.format("%.1f",100-memData[2]/memData[1]*100) or "N/A") .. " %" )
-                        tabWdg[ tabWdgRow.SWAP ][ tabWdgCol.TOTAL ]:set_text( string.format("%.1f GB",memData[3]/1024) or "N/A")
-                        tabWdg[ tabWdgRow.SWAP ][ tabWdgCol.FREE  ]:set_text( string.format("%.1f GB",memData[4]/1024) or "N/A")
-                        tabWdg[ tabWdgRow.SWAP ][ tabWdgCol.USED  ]:set_text((string.format("%.1f",100-memData[4]/memData[3]*100) or "N/A") .. " %" )
-                    end
-                end
             else
                 print("INFO@memInfo: Unknown line",packet[2])
             end
         end)
 
 
+end
+
+local function parseViciousMemstat(widget,content)
+    if dataMenu.visible then
+        tabWdg[ tabWdgRow.RAM  ][ tabWdgCol.TOTAL ]:set_text( string.format("%.2f GB",content[3]/1024) or "N/A")
+        tabWdg[ tabWdgRow.RAM  ][ tabWdgCol.FREE  ]:set_text( string.format("%.2f GB",content[4]/1024) or "N/A")
+        tabWdg[ tabWdgRow.RAM  ][ tabWdgCol.USED  ]:set_text((string.format("%.1f",content[1]) or "N/A") .. " %" )
+        tabWdg[ tabWdgRow.SWAP ][ tabWdgCol.TOTAL ]:set_text( string.format("%.1f GB",content[7]/1024) or "N/A")
+        tabWdg[ tabWdgRow.SWAP ][ tabWdgCol.FREE  ]:set_text( string.format("%.1f GB",content[8]/1024) or "N/A")
+        tabWdg[ tabWdgRow.SWAP ][ tabWdgCol.USED  ]:set_text((string.format("%.2f",content[5]) or "N/A") .. " %" )
+    end
+    return content[1]
 end
 
 local function repaint()
@@ -196,7 +189,7 @@ local function repaint()
     mainMenu:add_widget(radical.widgets.header(mainMenu,"USERS",{suffix_widget=imb}),{height = 20, width = 200})
     local memStat
 
-    usrMenu = embed({max_items=5})
+    usrMenu = embed({max_items=3})
     mainMenu:add_embeded_menu(usrMenu)
 
     mainMenu:add_widget(radical.widgets.header(mainMenu,"STATE",{suffix_widget=imb}),{height = 20 , width = 200})
@@ -207,7 +200,7 @@ local function repaint()
 
     mainMenu:add_widget(radical.widgets.header(mainMenu,"PROCESS",{suffix_widget=imb}),{height = 20 , width = 200})
 
-    topMenu = embed({max_items=3})
+    topMenu = embed({max_items=8})
     mainMenu:add_embeded_menu(topMenu)
 
     return mainMenu
@@ -222,9 +215,7 @@ local function new(margin, args)
         end
         if not dataMenu.visible then
             refreshStat()
-            myTimer:start()
         else
-            myTimer:stop()
         end
         dataMenu.visible = not dataMenu.visible
     end
@@ -233,13 +224,11 @@ local function new(margin, args)
 
     local volumewidget2 = allinone()
     volumewidget2:set_icon(config.iconPath .. "cpu.png")
-    vicious.register(volumewidget2, vicious.widgets.mem, '$1', 1, 'mem')
+    dataMenu = repaint()
+    vicious.register(volumewidget2, vicious.widgets.mem, parseViciousMemstat, 1)
 
     volumewidget2:buttons (buttonclick)
 
-    --Create update timer
-    myTimer = capi.timer({ timeout = 1 })
-    myTimer:connect_signal("timeout", refreshStat)
     --Same old trick to fix first load
     --TODO: Fix first load problem with embed widgets
     toggle()
