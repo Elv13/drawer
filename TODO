@@ -9,3 +9,5 @@ netInfo
 	*Local lookup
 dateInfo
 	*Hide cam and map section if none available
+soundInfo
+	* Application volume control
