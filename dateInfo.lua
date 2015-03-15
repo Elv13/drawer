@@ -75,7 +75,7 @@ local function createDrawer()
   updateWeater()
 
   function updateCalendar()
-    local f = io.popen('/usr/bin/cal -h',"r")
+    local f = io.popen('/usr/bin/cal',"r")
     local someText3 = "<tt><b><i>" .. f:read() .. "</i></b><u>" .. "\n" .. f:read() .. '</u>\n' .. f:read("*all") .. "</tt>"
     f:close()
     local day = tonumber(os.date('%d'))
@@ -93,6 +93,7 @@ local function createDrawer()
     f = io.popen('/usr/bin/cal ' .. month .. ' ' .. year ,"r")
     someText3 = someText3 .. "<tt><b><i>" .. f:read() .. "</i></b><u>" .. "\n" .. f:read() .. '</u>\n' .. f:read("*all") .. "</tt>"
     f:close()
+
     calInfo:set_markup(someText3)
   end
 
