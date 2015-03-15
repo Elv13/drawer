@@ -14,7 +14,7 @@ local widget2      = require( "awful.widget"             )
 local wibox        = require( "wibox"                    )
 local menu         = require( "radical.context"          )
 local radtab       = require( "radical.widgets.table"    )
-local vicious      = require( "vicious"           )
+local vicious      = require("extern.vicious")
 local config       = require( "forgotten"                )
 local util         = require( "awful.util"               )
 local radical      = require( "radical"                  )
@@ -58,7 +58,7 @@ local usrMenu,typeMenu,topMenu
 local function refreshStat()
     process={}
     memState={}
-    --Load all info 
+    --Load all info
     fd_async.exec.command(util.getdir("config")..'/drawer/Scripts/memStatistics.sh'):connect_signal("new::line",function(content)
             --Ignore nil content
             if content == nil then return end
