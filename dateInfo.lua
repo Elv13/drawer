@@ -49,7 +49,7 @@ local timeInfo = wibox.widget.textbox()
 	local weatherInfo2=wibox.widget.textbox()
 function updateWeater()
 	if dateModule.latitude ~= nil and dateModule.longitude ~= nil then
-	local f=io.popen("curl -S 'http://api.openweathermap.org/data/2.5/weather?lat="..dateModule.latitude.."&lon="..dateModule.longitude.."'")
+	local f=io.popen("curl -S 'http://api.openweathermap.org/data/2.5/weather?lat="..dateModule.latitude.."&lon="..dateModule.longitude.."&appid=2de143494c0b295cca9337e1e96b00e0'")
 	local weatherInfo = nil
 	if f ~= nil then
 	local wData=json:decode(f:read("*all"))
